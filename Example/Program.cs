@@ -9,7 +9,7 @@ namespace Example
         {
             var config = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json")
-                .AddCloudConfig("MyApplication", "MyService")
+                .AddCloudConfig("configs", true)
                 .Build();
         }
     }

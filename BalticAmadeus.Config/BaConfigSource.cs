@@ -9,10 +9,12 @@ namespace BalticAmadeus.Config
     public class BaConfigSource : JsonConfigurationSource
     {
         private string _blobName;
+        private bool _required;
 
-        public BaConfigSource(string blobName)
+        public BaConfigSource(string blobName, bool required)
         {
             _blobName = blobName;
+            _required = required;
         }
 
         public override IConfigurationProvider Build(IConfigurationBuilder builder)
@@ -24,9 +26,16 @@ namespace BalticAmadeus.Config
             }
             else
             {
-                var blobBlock = GetBlobBlockFromCloud(environmentString);
-                Optional = !blobBlock.ExistsAsync().Result;
-                FileProvider = new BaConfigFileProvider(blobBlock);
+                if (_required)
+                {
+                    var blobBlock = GetBlobBlockFromCloud(environmentString);
+                    Optional = !blobBlock.ExistsAsync().Result;
+                    FileProvider = new BaConfigFileProvider(blobBlock);
+                }
+                else
+                {
+                    Optional = true;
+                }
             }
             return new JsonConfigurationProvider(this);
         }
