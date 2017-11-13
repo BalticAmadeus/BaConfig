@@ -26,21 +26,17 @@ namespace BalticAmadeus.Config
             }
             else
             {
-                if (_required)
+                Optional = !_required;
+                if (!Optional)
                 {
-                    var blobBlock = GetBlobBlockFromCloud(environmentString);
-                    Optional = !blobBlock.ExistsAsync().Result;
+                    var blobBlock = GetBlobBlockReferenceFromCloud(environmentString);
                     FileProvider = new BaConfigFileProvider(blobBlock);
-                }
-                else
-                {
-                    Optional = true;
                 }
             }
             return new JsonConfigurationProvider(this);
         }
 
-        public CloudBlockBlob GetBlobBlockFromCloud(string environmentString)
+        public CloudBlockBlob GetBlobBlockReferenceFromCloud(string environmentString)
         {
             if (!environmentString.StartsWith("ContainerName"))
                 throw new Exception("BACONFIG_TARGET format is invalid. Valid format: ContainerName=....;ConnectionString");
@@ -53,9 +49,10 @@ namespace BalticAmadeus.Config
 
             var blobContainer = CloudStorageAccount.Parse(connectionString).CreateCloudBlobClient().GetContainerReference(containerName);
 
-            if(!blobContainer.ExistsAsync().Result)
+            if (!blobContainer.ExistsAsync().Result)
                 throw new Exception("BACONFIG_TARGET container does not exists.");
 
+            Path = $"{containerName}/{_blobName}";
             return blobContainer.GetBlockBlobReference(_blobName);
         }
     }
