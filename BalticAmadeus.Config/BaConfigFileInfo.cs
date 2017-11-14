@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.FileProviders;
+using Microsoft.WindowsAzure.Storage.Blob;
 using System;
 using System.IO;
-using Microsoft.WindowsAzure.Storage.Blob;
 
 namespace BalticAmadeus.Config
 {

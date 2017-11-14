@@ -52,7 +52,8 @@ namespace BalticAmadeus.Config
             if (!blobContainer.ExistsAsync().Result)
                 throw new Exception("BACONFIG_TARGET container does not exists.");
 
-            Path = $"{containerName}/{_blobName}";
+            this.Path = $"{containerName}/{_blobName}";
+
             return blobContainer.GetBlockBlobReference(_blobName);
         }
     }
