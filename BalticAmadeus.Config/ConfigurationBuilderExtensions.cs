@@ -17,7 +17,7 @@ namespace BalticAmadeus.Config
             return builder;
         }
         
-        public static IConfigurationBuilder AddServiceConfigurations(this IConfigurationBuilder builder, string serviceName)
+        public static IConfigurationBuilder AddServiceConfigs(this IConfigurationBuilder builder, string serviceName)
         {
             var serviceBlobName = serviceName + ".json";
             var serviceSecretBlobName = serviceName + "Secrets.json";
