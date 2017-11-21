@@ -17,15 +17,15 @@ namespace BalticAmadeus.Config
             return builder;
         }
         
-        public static IConfigurationBuilder AddServiceConfigs(this IConfigurationBuilder builder, string serviceName)
+        public static IConfigurationBuilder AddStructureCloudConfig (this IConfigurationBuilder builder, string serviceName)
         {
             var serviceBlobName = serviceName + ".json";
-            var serviceSecretBlobName = serviceName + "Secrets.json";
+            var serviceSecretBlobName = serviceName + ".secrets.json";
 
             builder.SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json")
-                .AddCloudConfig("GlobalSettings.json")
-                .AddCloudConfig("GlobalSettingsSecrets.json")
+                .AddCloudConfig("globalSettings.json")
+                .AddCloudConfig("globalSettings.secrets.json")
                 .AddCloudConfig(serviceBlobName)
                 .AddCloudConfig(serviceSecretBlobName);
 
