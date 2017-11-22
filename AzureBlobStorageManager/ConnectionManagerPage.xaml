@@ -1,0 +1,95 @@
+﻿<Page
+    x:Class="ConfigurationStorageManager.StorageSelectionPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:ConfigurationStorageManager"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Padding="30">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="185"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="auto"/>
+        </Grid.ColumnDefinitions>
+        
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        
+        <TextBox x:Name="ConnectionNameTxt" 
+                 Header="Connection name:" 
+                 PlaceholderText="Connection name ..." 
+                 Grid.Column="0" Grid.Row="0" 
+                 Margin="10"/>
+        
+        <TextBox x:Name="ConnectionStringTxt" 
+                 Header="Connection string:" 
+                 PlaceholderText="Connection string ..." 
+                 Grid.Column="1" 
+                 Grid.Row="0" 
+                 Margin="10"/>
+        
+        <Button x:Name="NewConnectionStringBtn" 
+                Content="Add new connection string" 
+                Margin="10,40,10,10"
+                Grid.Column="3" 
+                Grid.Row="0"
+                Click="NewConnectionBtn_Click"/>
+
+        <ListView x:Name="ConnectionList" 
+                  Grid.Row="1" Grid.ColumnSpan="4" 
+                  SelectionMode="None"
+                  ItemsSource="{x:Bind _connectionList}">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="185"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBox x:Name="EConnectionNameTxt" 
+                                 Header="Connection name:" 
+                                 Text="{Binding NewConnectionName, Mode=TwoWay}"
+                                 Grid.Column="0" 
+                                 Margin="10" 
+                                 IsEnabled="{Binding IsEnabled, Mode=OneWay}"/>
+                        
+                        
+                        <PasswordBox x:Name="EConnectionStringTxt" 
+                                     Header="Connection name"
+                                     Password="{Binding NewConnectionString, Mode=TwoWay}"
+                                     PasswordRevealMode="{Binding ShowPasswordParam, Mode=OneWay}"
+                                     Grid.Column="1" 
+                                     Margin="10" 
+                                     IsEnabled="{Binding IsEnabled, Mode=OneWay}"/>
+                        
+                        <Button x:Name="EditButton" 
+                                Margin="10,40,10,10"
+                                Grid.Column="2" 
+                                Content="Edit"
+                                Click="EditButton_Click"/>
+                        
+                        <Button x:Name="DeleteButton" 
+                                Margin="10,40,10,10" 
+                                Grid.Column="3" 
+                                Content="Delete"
+                                Click="DeleteButton_Click"/>
+                        
+                        <Button x:Name="ShowConnectionStringBtn"
+                                Margin="10,40,10,10" Grid.Column="4" 
+                                Content="Show connection string"
+                                Click="ShowConnectionStringBtn_Click"/>
+                        
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </Grid>
+</Page>

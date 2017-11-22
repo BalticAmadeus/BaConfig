@@ -1,0 +1,70 @@
+﻿<Page
+    x:Class="ConfigurationStorageManager.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:ConfigurationStorageManager"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"> 
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Padding="30">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="auto"/>
+        </Grid.RowDefinitions>
+        
+        <StackPanel Grid.Row="0" Orientation="Horizontal">
+            
+            <TextBlock Text="Connection:" 
+                       FontSize="20"/>
+            
+            <ComboBox x:Name="ConnectionList" 
+                      ItemsSource="{x:Bind _connectionDropBoxItems}" 
+                      Width="250"
+                      SelectionChanged="ConnectionList_SelectionChanged"/>
+            
+            <Button Click="EditButton_Click"
+                    Content="Edit connections" 
+                    Margin="15,0,0,0"/>
+
+            <TextBlock x:Name="MessageText"
+                       Margin="15,0,0,0"
+                       FontSize="20"/>
+            <Button x:Name="ReconnectButton"
+                    Content="Reconnect"
+                    Visibility="Collapsed"
+                    Click="ReconnectButton_Click"/>
+
+        </StackPanel>
+
+        <Pivot x:Name="BlobPivot" Grid.Row="1" Margin="0,15,0,0" SelectionChanged="BlobPivot_SelectionChanged">
+            <Pivot.RightHeader>
+                <ComboBox Header="Container:"
+                          x:Name="ContainerDropBoxList" 
+                          ItemsSource="{x:Bind _containerDropBoxItems}" 
+                          DisplayMemberPath="Name"
+                          SelectionChanged="ContainerDropBoxList_SelectionChanged"/>
+            </Pivot.RightHeader>
+        </Pivot>
+        
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+            
+            <Button x:Name="DeletButton"
+                    HorizontalAlignment="Right" 
+                    Padding="20,0,20,0"
+                    Margin="0,0,15,0"
+                    Visibility="Collapsed"
+                    Content="Delete blob"
+                    Click="DeleteButton_CLick"/>
+            
+            <Button x:Name="SaveButton"
+                    HorizontalAlignment="Right" 
+                    Margin="0,0,15,0"
+                    Visibility="Collapsed"
+                    Padding="20,0,20,0" 
+                    Content="Save blob"
+                    Click="SaveButton_Click"/>
+        </StackPanel>
+        
+    </Grid>
+</Page>
