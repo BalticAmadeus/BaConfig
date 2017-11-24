@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.Security.Credentials;
@@ -13,21 +14,30 @@ using Windows.UI.Xaml.Controls.Primitives;
 
 namespace ConfigurationStorageManager
 {
-    public sealed partial class MainPage : Page
+    public sealed partial class MainPage : Page, INotifyPropertyChanged
     {
         private const string VAULT_NAME = "ConnectionStrings";
 
         private ObservableCollection<CloudBlobContainer> _containerDropBoxItems = new ObservableCollection<CloudBlobContainer>();
         private ObservableCollection<ConnectionModel> _connectionDropBoxItems = new ObservableCollection<ConnectionModel>();
+        private ObservableCollection<CloudBlockBlob> _blobListItems = new ObservableCollection<CloudBlockBlob>();
+        private ObservableCollection<string> _searchSuggestions = new ObservableCollection<string>();
 
-        private List<FilteredItem> _allItemsForFiltering;
+        //private List<FilteredItem> _allItemsForFiltering;
 
+        public event PropertyChangedEventHandler PropertyChanged;
+        public void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
         public MainPage()
         {
             this.InitializeComponent();
             GetConnectionsFromStorage();
-            _allItemsForFiltering = new List<FilteredItem>();
+
+            SaveButton.Visibility = Visibility.Collapsed;
+            DeletButton.Visibility = Visibility.Collapsed;
+            BlobList.Visibility = Visibility.Collapsed;
+            BlobNameTxt.Visibility = Visibility.Collapsed;
+            BlobContentTxt.Visibility = Visibility.Collapsed;
         }
 
         #region Buttons_Click
@@ -38,56 +48,57 @@ namespace ConfigurationStorageManager
 
         private async void SaveButton_Click(object sender, RoutedEventArgs e)
         {
-            if (BlobPivot.SelectedItem == null) return;
-            var pivotItemContent = (PivotItemTag)((PivotItem)BlobPivot.SelectedItem).Tag;
+            var selectedBlob = (CloudBlockBlob)BlobList.SelectedItem;
+            if (selectedBlob == null) return;
 
-            if (pivotItemContent != null)
+            var contentText = BlobContentTxt.Text;
+
+            if (!IsJsonValid(contentText))
             {
-                var contentText = pivotItemContent.Content.Text;
-                if (!IsJsonValid(contentText))
-                {
-                    ShowDialogToUser("Json format is invalid.");
-                }
+                await ShowDialogToUser("Json format is invalid.");
+            }
 
-                try
-                {
-                    MessageText.Text = "Working ...";
-                    await CloudStorageManagetment.UploadDataToBlobAsync(pivotItemContent.Blob, contentText);
-                    await ShowMessageToUser($"Blob {pivotItemContent.Blob.Name} content have been saved.");
-                }
-                catch(Exception ex)
-                {
-                    MessageText.Text = "";
-                    ShowDialogToUser(ex.InnerException.Message);
-                }
+            try
+            {
+                MessageText.Text = "Working ...";
+                await CloudStorageManagetment.UploadDataToBlobAsync(selectedBlob, contentText);
+                await ShowMessageToUser($"Blob {selectedBlob.Name} content have been saved.");
+            }
+            catch (Exception ex)
+            {
+                MessageText.Text = "";
+                await ShowDialogToUser(ex.InnerException.Message);
             }
         }
 
         private async void DeleteButton_CLick(object sender, RoutedEventArgs e)
         {
-            var selectedPivotItem = (PivotItem)BlobPivot.SelectedItem;
-            var blobContent = (PivotItemTag)selectedPivotItem.Tag;
-            if (blobContent == null) return;
+            var selectedBlob = (CloudBlockBlob)BlobList.SelectedItem;
+            if (selectedBlob == null) return;
 
             var dialogYes = new UICommand("Yes", async cmd =>
             {
                 try
                 {
                     MessageText.Text = "Working ...";
-                    await CloudStorageManagetment.RemoveBlobAsync(blobContent.Blob);
-                    BlobPivot.Items.Remove(selectedPivotItem);
-                    await ShowMessageToUser($"Blob \"{blobContent.Blob.Name}\" have been deleted.");
-                    _allItemsForFiltering.RemoveAll(x=>x.Blob.Equals(blobContent.Blob));
+                    await CloudStorageManagetment.RemoveBlobAsync(selectedBlob);
+                    _blobListItems.Remove(selectedBlob);//On property change
+                    
+                    BlobNameTxt.Visibility = Visibility.Collapsed;
+                    BlobContentTxt.Visibility = Visibility.Collapsed;
+                    SaveButton.Visibility = Visibility.Collapsed;
+                    DeletButton.Visibility = Visibility.Collapsed;
+
+                    await ShowMessageToUser($"Blob \"{selectedBlob.Name}\" have been deleted.");
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
-                    ShowDialogToUser(ex.InnerException.Message);
+                    await ShowDialogToUser(ex.InnerException.Message);
                 }
             });
-
             var dialogNo = new UICommand("No");
 
-            var deleteConfirmDialog = new MessageDialog($"Do you want to delete \"{blobContent.Blob.Name}\" blob ?");
+            var deleteConfirmDialog = new MessageDialog($"Do you want to delete \"{selectedBlob.Name}\" blob ?");
             deleteConfirmDialog.Commands.Add(dialogYes);
             deleteConfirmDialog.Commands.Add(dialogNo);
             await deleteConfirmDialog.ShowAsync();
@@ -95,68 +106,27 @@ namespace ConfigurationStorageManager
 
         private void ReconnectButton_Click(object sender, RoutedEventArgs e)
         {
-            ConnectionList.IsEnabled = false;
-            ContainerDropBoxList.IsEnabled = false;
-
             ConnectToStorage();
-
-            ReconnectButton.Visibility = Visibility.Collapsed;
-            ConnectionList.IsEnabled = true;
-            ContainerDropBoxList.IsEnabled = true;
-        }
-
-        private async void NewBlobButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (ConnectionList.SelectedItem == null || ContainerDropBoxList.SelectedItem == null) return;
-
-            var newBlobDialog = new NewBlobDialog(BlobPivot.Items.ToList());
-            var result = await newBlobDialog.ShowAsync();
-            if (result != ContentDialogResult.Secondary) return;
-
-            var blobName = newBlobDialog.BlobName;
-            var blobContent = newBlobDialog.BlobContent;
-
-            try
-            {
-                MessageText.Text = "Working ...";
-                var newblob = await CloudStorageManagetment.AddNewBlobAsync(
-                (CloudBlobContainer)ContainerDropBoxList.SelectedItem, blobName, blobContent);
-
-                var positionToInsert = BlobPivot.Items.Count() - 1;
-
-                var newPivotItem = await GetPivotItemFromBlob(newblob);
-                if (newPivotItem != null)
-                    BlobPivot.Items.Insert(positionToInsert, newPivotItem);
-
-                await ShowMessageToUser($"Blob \"{blobName}\" have been created.");
-
-            }
-            catch (Exception ex)
-            {
-                MessageText.Text = "";
-                ShowDialogToUser(ex.InnerException.Message);
-            }
         }
         #endregion
 
         #region Lists_SelectionChanged
         private void ConnectionList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            ConnectionList.IsEnabled = false;
-            ContainerDropBoxList.IsEnabled = false;
-
             ConnectToStorage();
+        }
 
-            ConnectionList.IsEnabled = true;
-            ContainerDropBoxList.IsEnabled = true;
+        private void BlobList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var selectedBlob = (CloudBlockBlob)BlobList.SelectedItem;
+            if (selectedBlob == null) return;
+            PopulateBlob(selectedBlob);
         }
 
         private async void ContainerDropBoxList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             ContainerDropBoxList.IsEnabled = false;
             ConnectionList.IsEnabled = false;
-            BlobPivot.Items.Clear();
-            _allItemsForFiltering.Clear();
 
             var selectedContainer = (CloudBlobContainer)ContainerDropBoxList.SelectedItem;
             if (selectedContainer == null) return;
@@ -165,25 +135,13 @@ namespace ConfigurationStorageManager
             {
                 MessageText.Text = "Working ...";
                 var containerBlobSegment = await CloudStorageManagetment.GetBlobsFromCloudAsync(selectedContainer);
-                var containerBlobList = containerBlobSegment.Results.ToList();
-                _allItemsForFiltering.Clear();
-
-                foreach (CloudBlockBlob blob in containerBlobList)
-                {
-                    var newPivotItem = await GetPivotItemFromBlob(blob);
-                    if (newPivotItem != null)
-                        BlobPivot.Items.Add(newPivotItem);
-                }
-
-                if (BlobPivot.Items.Count != 1)
-                {
-                    SaveButton.Visibility = Visibility.Visible;
-                    DeletButton.Visibility = Visibility.Visible;
-                }
+                 _blobListItems = new ObservableCollection<CloudBlockBlob>(containerBlobSegment.Results.ToList().Cast<CloudBlockBlob>().ToList());
+                OnPropertyChanged(nameof(_blobListItems));
+                BlobList.Visibility = Visibility.Visible;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                ShowDialogToUser(ex.InnerException.Message);
+                await ShowDialogToUser(ex.InnerException.Message);
             }
 
             MessageText.Text = "";
@@ -191,23 +149,6 @@ namespace ConfigurationStorageManager
             ConnectionList.IsEnabled = true;
         }
 
-        private void BlobPivot_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            var selectedPivotItem = (PivotItem)BlobPivot.SelectedItem;
-            if (selectedPivotItem == null) return;
-
-            var blobContent = (PivotItemTag)selectedPivotItem.Tag;
-            if (blobContent == null)
-            {
-                DeletButton.Visibility = Visibility.Collapsed;
-                SaveButton.Visibility = Visibility.Collapsed;
-            }
-            else
-            {
-                DeletButton.Visibility = Visibility.Visible;
-                SaveButton.Visibility = Visibility.Visible;
-            }
-        }
         #endregion
 
         #region Validations
@@ -227,18 +168,23 @@ namespace ConfigurationStorageManager
 
         private async void ConnectToStorage()
         {
+            ContainerDropBoxList.IsEnabled = false;
+            ConnectionList.IsEnabled = false;
+
             var connection = (ConnectionModel)ConnectionList.SelectedItem;
             if (connection == null) return;
 
-            BlobPivot.Items.Clear();
             _containerDropBoxItems.Clear();
-            _allItemsForFiltering.Clear();
+            _blobListItems.Clear();
 
             var isConnectedToStorage = CloudStorageManagetment.CreateConnectionWithCloud(connection.ConnectionString);
             if (!isConnectedToStorage)
             {
-                ShowDialogToUser("Error: Failed connect to cloud storage !");
+                await ShowDialogToUser("Error: Failed connect to cloud storage !");
                 ReconnectButton.Visibility = Visibility.Visible;
+                ContainerDropBoxList.IsEnabled = true;
+                ConnectionList.IsEnabled = true;
+
                 return;
             }
 
@@ -246,17 +192,24 @@ namespace ConfigurationStorageManager
             {
                 MessageText.Text = "Working ...";
                 await PopulateContainerDropBoxList();
+
+                ContainerDropBoxList.IsEnabled = true;
+                ConnectionList.IsEnabled = true;
+
                 await ShowMessageToUser("Successfully connected to cloud storage.");
             }
             catch (Exception ex)
             {
                 MessageText.Text = "";
-                ShowDialogToUser(ex.InnerException.Message);
+                await ShowDialogToUser(ex.InnerException.Message);
+
                 ReconnectButton.Visibility = Visibility.Visible;
+                ContainerDropBoxList.IsEnabled = true;
+                ConnectionList.IsEnabled = true;
             }
         }
 
-        private void GetConnectionsFromStorage()
+        private async void GetConnectionsFromStorage()
         {
             try
             {
@@ -276,59 +229,43 @@ namespace ConfigurationStorageManager
             }
             catch(Exception ex)
             {
-                ShowDialogToUser(ex.InnerException.Message);
+                await ShowDialogToUser(ex.InnerException.Message);
             }
         }
 
         private async Task PopulateContainerDropBoxList()
         {
             var containerSegment = await CloudStorageManagetment.GetContainersFromCloudAsync();
-            containerSegment.Results.ToList().ForEach(x => _containerDropBoxItems.Add(x));
+            _containerDropBoxItems = new ObservableCollection<CloudBlobContainer>(containerSegment.Results.ToList());
+            OnPropertyChanged(nameof(_containerDropBoxItems));
         }
 
-        private async Task<PivotItem> GetPivotItemFromBlob(CloudBlockBlob blob)
+        private async void PopulateBlob(CloudBlockBlob blob)
         {
+
             try
             {
+                ContainerDropBoxList.IsEnabled = false;
+                ConnectionList.IsEnabled = false;
+                MessageText.Text = "Working ...";
+
                 var blobData = await CloudStorageManagetment.GetDataFromBlobAsync(blob);
-                var pivotItem = new PivotItem { Header = blob.Name };
-                var grid = new Grid();
+                BlobNameTxt.Text = blob.Name;
+                BlobContentTxt.Text = blobData;
 
-                grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-                grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+                BlobContentTxt.Visibility = Visibility.Visible;
+                BlobNameTxt.Visibility = Visibility.Visible;
+                SaveButton.Visibility = Visibility.Visible;
+                DeletButton.Visibility = Visibility.Visible;
 
-                var contentEditorLabel = new TextBlock { Text = "Editor:" };
-
-                var contentEditor = new TextBox
-                {
-                    IsSpellCheckEnabled = false,
-                    TextWrapping = TextWrapping.Wrap,
-                    AcceptsReturn = true,
-                    Margin = new Thickness(0, 10, 0, 30)
-                };
-
-                contentEditor.Text = blobData;
-                ScrollViewer.SetVerticalScrollBarVisibility(contentEditor, ScrollBarVisibility.Visible);
-
-                Grid.SetRow(contentEditorLabel, 0);
-                Grid.SetRow(contentEditor, 1);
-
-                grid.Children.Add(contentEditorLabel);
-                grid.Children.Add(contentEditor);
-
-                pivotItem.Tag = new PivotItemTag { Blob = blob, Content = contentEditor };
-                pivotItem.Content = grid;
-                
-                _allItemsForFiltering.Add(new FilteredItem { Blob = blob, PivotItem = pivotItem });
-
-                return pivotItem;
-
+                ContainerDropBoxList.IsEnabled = true;
+                ConnectionList.IsEnabled = true;
             }
             catch(Exception ex)
             {
-                ShowDialogToUser(ex.InnerException.Message);
-                return null;
+                await ShowDialogToUser(ex.InnerException.Message);
             }
+            MessageText.Text = "";
         }
 
         private  async Task ShowMessageToUser(string message)
@@ -338,7 +275,7 @@ namespace ConfigurationStorageManager
             MessageText.Text = "";
         }
 
-        private async void ShowDialogToUser(string message)
+        private async Task ShowDialogToUser(string message)
         {
             var messageDialog = new MessageDialog(message);
             await messageDialog.ShowAsync();
@@ -348,41 +285,25 @@ namespace ConfigurationStorageManager
         {
             if (args.Reason == AutoSuggestionBoxTextChangeReason.UserInput)
             {
-                try
+                if (sender.Text.Count() > 0)
                 {
-                    if (sender.Text.Count() > 0)
-                    {
-                        var filteredItems = _allItemsForFiltering.Where(x => x.Blob.Name.IndexOf(sender.Text, StringComparison.CurrentCultureIgnoreCase) >= 0).ToList();
-                        sender.ItemsSource = filteredItems;
-                    }
-                    else
-                    {
-                        sender.ItemsSource = _allItemsForFiltering;
-                    }
+                    _searchSuggestions = new ObservableCollection<string>(_blobListItems.Select(x => x.Name).Cast<string>().Where(x=>x.IndexOf(sender.Text, StringComparison.CurrentCultureIgnoreCase)>= 0));
+                    OnPropertyChanged(nameof(_searchSuggestions));
                 }
-                catch
+                else
                 {
-
+                    _searchSuggestions = new ObservableCollection<string>(_blobListItems.Select(x=>x.Name).Cast<string>());
+                    OnPropertyChanged(nameof(_searchSuggestions));
                 }
             }
         }
 
         private void SearchBlobTxt_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
         {
-            var suggestion = (FilteredItem)args.ChosenSuggestion;
-            if (suggestion == null) return;
-            if (((PivotItem)BlobPivot.SelectedItem).Equals(suggestion.PivotItem)) return;
-
-            BlobPivot.SelectedItem= ((FilteredItem)args.ChosenSuggestion).PivotItem;
         }
 
         private void SearchBlobTxt_SuggestionChosen(AutoSuggestBox sender, AutoSuggestBoxSuggestionChosenEventArgs args)
         {
-            var selectedItem = (FilteredItem)args.SelectedItem;
-            if (selectedItem == null) return;
-            if (((PivotItem)BlobPivot.SelectedItem).Equals(selectedItem.PivotItem)) return;
-
-            BlobPivot.SelectedItem = ((FilteredItem)args.SelectedItem).PivotItem;
         }
     }
 }
