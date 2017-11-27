@@ -1,6 +1,8 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Microsoft.WindowsAzure.Storage.Blob;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -21,10 +23,9 @@ namespace ConfigurationStorageManager
     public sealed partial class NewBlobDialog : ContentDialog
     {
         public string BlobName { get; set; }
-        public string BlobContent { get; set; }
-        private List<object> _blobList;
+        private ObservableCollection<CloudBlockBlob> _blobList;
 
-        public NewBlobDialog(List<object> blobList)
+        public NewBlobDialog(ObservableCollection<CloudBlockBlob> blobList)
         {
             _blobList = blobList;
             this.InitializeComponent();
@@ -38,13 +39,13 @@ namespace ConfigurationStorageManager
 
         private void SaveButton_Click(ContentDialog sender, ContentDialogButtonClickEventArgs args)
         {
-            if (!IsBlobValid(BlobName, BlobContent))
+            if (!IsBlobValid(BlobName))
                 args.Cancel = true;
         }
 
-        private bool IsBlobValid(string blobName, string blobContent)
+        private bool IsBlobValid(string blobName)
         {
-            if (blobName.Count().Equals(0) || blobContent.Count().Equals(0))
+            if (blobName.Count().Equals(0))
             {
                 ShowDialogToUser("Blob name or blob content can not be empty.");
                 return false;
@@ -56,45 +57,17 @@ namespace ConfigurationStorageManager
                 return false;
             }
 
-            if (!IsJsonValid(blobContent))
-            {
-                ShowDialogToUser("Json format is invalid.");
-                return false;
-            }
             return true;
         }
 
         private bool IsBlobNameValid(string blobName)
         {
-            foreach (PivotItem pivotItem in _blobList)
+            foreach (var blob in _blobList)
             {
-                var blob = (PivotItemTag)pivotItem.Tag;
-                if (blob != null)
-                {
-                    if (blob.Blob.Name.Equals(blobName))
-                        return false;
-                }
+                if (blob.Name.Equals(blobName))
+                    return false;
             }
             return true;
-        }
-
-        private static bool IsJsonValid(string jsonString)
-        {
-            try
-            {
-                JObject.Parse(jsonString);
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-        private async void ShowMessageToUser(string message)
-        {
-            Message.Text = message;
-            await Task.Delay(3500);
-            Message.Text = "";
         }
 
         private async void ShowDialogToUser(string message)

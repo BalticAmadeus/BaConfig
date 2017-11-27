@@ -101,14 +101,12 @@
     </Compile>
     <Compile Include="CloudStorageManagetment.cs" />
     <Compile Include="ConnectionModel.cs" />
-    <Compile Include="ItemForFiltering.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
-    <Compile Include="NewBlobDialog.xaml.cs">
-      <DependentUpon>NewBlobDialog.xaml</DependentUpon>
+    <Compile Include="BlobEditDialog.xaml.cs">
+      <DependentUpon>BlobEditDialog.xaml</DependentUpon>
     </Compile>
-    <Compile Include="PivotItemTag.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ConnectionManagerPage.xaml.cs">
       <DependentUpon>ConnectionManagerPage.xaml</DependentUpon>
@@ -144,7 +142,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="NewBlobDialog.xaml">
+    <Page Include="BlobEditDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

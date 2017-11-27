@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Example", "Example\Example.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BalticAmadeus.Config", "BalticAmadeus.Config\BalticAmadeus.Config.csproj", "{ADEDB6FB-4071-45D3-98B8-AFC1F4F2DF9C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConfigurationStorageManager", "AzureBlobStorageManager\ConfigurationStorageManager.csproj", "{88174159-6168-4290-AF2E-A514EF5BDD85}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConfigurationStorageManager", "CloudStorageManagetment\ConfigurationStorageManager.csproj", "{88174159-6168-4290-AF2E-A514EF5BDD85}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -54,8 +54,6 @@ Global
 		{ADEDB6FB-4071-45D3-98B8-AFC1F4F2DF9C}.Release|x86.ActiveCfg = Release|Any CPU
 		{ADEDB6FB-4071-45D3-98B8-AFC1F4F2DF9C}.Release|x86.Build.0 = Release|Any CPU
 		{88174159-6168-4290-AF2E-A514EF5BDD85}.Debug|Any CPU.ActiveCfg = Debug|x86
-		{88174159-6168-4290-AF2E-A514EF5BDD85}.Debug|Any CPU.Build.0 = Debug|x86
-		{88174159-6168-4290-AF2E-A514EF5BDD85}.Debug|Any CPU.Deploy.0 = Debug|x86
 		{88174159-6168-4290-AF2E-A514EF5BDD85}.Debug|ARM.ActiveCfg = Debug|ARM
 		{88174159-6168-4290-AF2E-A514EF5BDD85}.Debug|ARM.Build.0 = Debug|ARM
 		{88174159-6168-4290-AF2E-A514EF5BDD85}.Debug|ARM.Deploy.0 = Debug|ARM

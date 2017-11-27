@@ -22,20 +22,11 @@
                    Grid.Row="0"
                    TextWrapping="Wrap"
                    FontSize="25"/>
-        
+
         <TextBox Header="New blob name:"
                      Text="{x:Bind Path=BlobName, Mode=TwoWay}"
                      PlaceholderText="Blob name ..."
                      Grid.Row="1"
                      Margin="5,10,0,10"/>
-
-        <TextBox Header="Content:" 
-                     Text="{x:Bind Path=BlobContent, Mode=TwoWay}"
-                     PlaceholderText="Blob content ..." 
-                     Grid.Row="2" AcceptsReturn="True"
-                     IsSpellCheckEnabled="False"
-                     TextWrapping="Wrap"
-                     ScrollViewer.VerticalScrollBarVisibility="Visible"
-                     Margin="0,10,0,30"/>
     </Grid>
 </ContentDialog>
