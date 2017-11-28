@@ -104,8 +104,8 @@
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
-    <Compile Include="BlobEditDialog.xaml.cs">
-      <DependentUpon>BlobEditDialog.xaml</DependentUpon>
+    <Compile Include="NewBlobDialog.xaml.cs">
+      <DependentUpon>NewBlobDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ConnectionManagerPage.xaml.cs">
@@ -142,7 +142,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="BlobEditDialog.xaml">
+    <Page Include="NewBlobDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
