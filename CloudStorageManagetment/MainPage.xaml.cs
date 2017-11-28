@@ -64,7 +64,7 @@ namespace ConfigurationStorageManager
             catch (Exception ex)
             {
                 MessageText.Text = "";
-                await ShowDialogToUser(ex.InnerException.Message);
+                await ShowDialogToUser(ex.Message);
             }
         }
 
@@ -87,7 +87,7 @@ namespace ConfigurationStorageManager
                 }
                 catch (Exception ex)
                 {
-                    await ShowDialogToUser(ex.InnerException.Message);
+                    await ShowDialogToUser(ex.Message);
                 }
             });
             var dialogNo = new UICommand("No");
@@ -105,22 +105,21 @@ namespace ConfigurationStorageManager
 
         private async void AddNewBlobButton_Click(object sender, RoutedEventArgs e)
         {
+            DisableSelection();
             try
             {
                 var newBlobDialog = new NewBlobDialog(_blobListItems);
                 var dialogResults = await newBlobDialog.ShowAsync();
                 if (dialogResults == ContentDialogResult.Secondary)
                 {
-                    ContainerDropBoxList.IsEnabled = false;
-                    ConnectionList.IsEnabled = false;
+
                     MessageText.Text = "Working ...";
 
                     var newBlob = await CloudStorageManagetment.AddNewBlobAsync((CloudBlobContainer)ContainerDropBoxList.SelectedItem, newBlobDialog.BlobName, "");
                     _blobListItems.Add(newBlob);
                     OnPropertyChanged(nameof(_blobListItems));
 
-                    ContainerDropBoxList.IsEnabled = true;
-                    ConnectionList.IsEnabled = true;
+                    EnableSelection();
 
                     BlobList.SelectedItem = newBlob;
                     await ShowMessageToUser($"Blob \"{newBlobDialog.BlobName}\" have been created.");
@@ -129,7 +128,8 @@ namespace ConfigurationStorageManager
             catch (Exception ex)
             {
                 MessageText.Text = "";
-                await ShowDialogToUser(ex.InnerException.Message);
+                await ShowDialogToUser(ex.Message);
+                EnableSelection();
             }
         }
 
@@ -150,11 +150,8 @@ namespace ConfigurationStorageManager
 
         private async void ContainerDropBoxList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            ContainerDropBoxList.IsEnabled = false;
-            ConnectionList.IsEnabled = false;
-
+            DisableSelection();
             HideBlobControls();
-
             BlobList.Visibility = Visibility.Collapsed;
 
             var selectedContainer = (CloudBlobContainer)ContainerDropBoxList.SelectedItem;
@@ -171,17 +168,15 @@ namespace ConfigurationStorageManager
             }
             catch (Exception ex)
             {
-                await ShowDialogToUser(ex.InnerException.Message);
+                await ShowDialogToUser(ex.Message);
             }
 
             MessageText.Text = "";
-            ContainerDropBoxList.IsEnabled = true;
-            ConnectionList.IsEnabled = true;
+            EnableSelection();
         }
 
         #endregion
 
-        #region Validations
         private static bool IsJsonValid(string jsonString)
         {
             try
@@ -194,15 +189,11 @@ namespace ConfigurationStorageManager
                 return false;
             }
         }
-        #endregion
 
         private async void ConnectToStorage()
         {
-            ContainerDropBoxList.IsEnabled = false;
-            ConnectionList.IsEnabled = false;
-
+            DisableSelection();
             HideBlobControls();
-
             BlobList.Visibility = Visibility.Collapsed;
             AddNewBlobButton.Visibility = Visibility.Collapsed;
 
@@ -215,11 +206,9 @@ namespace ConfigurationStorageManager
             var isConnectedToStorage = CloudStorageManagetment.CreateConnectionWithCloud(connection.ConnectionString);
             if (!isConnectedToStorage)
             {
-                await ShowDialogToUser("Error: Failed connect to cloud storage !");
+                await ShowDialogToUser("Error: Failed to connect to cloud storage !");
                 ReconnectButton.Visibility = Visibility.Visible;
-                ContainerDropBoxList.IsEnabled = true;
-                ConnectionList.IsEnabled = true;
-
+                EnableSelection();
                 return;
             }
 
@@ -227,10 +216,7 @@ namespace ConfigurationStorageManager
             {
                 MessageText.Text = "Working ...";
                 await PopulateContainerDropBoxList();
-
-                ContainerDropBoxList.IsEnabled = true;
-                ConnectionList.IsEnabled = true;
-
+                EnableSelection();
                 await ShowMessageToUser("Successfully connected to cloud storage.");
             }
             catch (Exception ex)
@@ -239,8 +225,7 @@ namespace ConfigurationStorageManager
                 await ShowDialogToUser(ex.InnerException.Message);
 
                 ReconnectButton.Visibility = Visibility.Visible;
-                ContainerDropBoxList.IsEnabled = true;
-                ConnectionList.IsEnabled = true;
+                EnableSelection();
             }
         }
 
@@ -264,7 +249,7 @@ namespace ConfigurationStorageManager
             }
             catch(Exception ex)
             {
-                await ShowDialogToUser(ex.InnerException.Message);
+                await ShowDialogToUser(ex.Message);
             }
         }
 
@@ -277,26 +262,23 @@ namespace ConfigurationStorageManager
 
         private async Task PopulateBlob(CloudBlockBlob blob)
         {
+            DisableSelection();
+
             try
             {
-                ContainerDropBoxList.IsEnabled = false;
-                ConnectionList.IsEnabled = false;
                 MessageText.Text = "Working ...";
-
                 var blobData = await CloudStorageManagetment.GetDataFromBlobAsync(blob);
                 BlobNameTxt.Text = blob.Name;
                 BlobContentTxt.Text = blobData;
-
                 ShowBlobControls();
-                
-                ContainerDropBoxList.IsEnabled = true;
-                ConnectionList.IsEnabled = true;
             }
             catch(Exception ex)
             {
-                await ShowDialogToUser(ex.InnerException.Message);
+                await ShowDialogToUser(ex.Message);
             }
+
             MessageText.Text = "";
+            EnableSelection();
         }
 
         private  async Task ShowMessageToUser(string message)
@@ -351,6 +333,18 @@ namespace ConfigurationStorageManager
             BlobNameTxt.Visibility = Visibility.Visible;
             SaveButton.Visibility = Visibility.Visible;
             DeletButton.Visibility = Visibility.Visible;
+        }
+
+        private void EnableSelection()
+        {
+            ContainerDropBoxList.IsEnabled = true;
+            ConnectionList.IsEnabled = true;
+        }
+
+        private void DisableSelection()
+        {
+            ContainerDropBoxList.IsEnabled = false;
+            ConnectionList.IsEnabled = false;
         }
     }
 }

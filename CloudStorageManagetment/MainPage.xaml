@@ -70,7 +70,7 @@
                             Grid.Column="4"
                             TextChanged="SearchBlobTxt_TextChanged"
                             QuerySubmitted="SearchBlobTxt_QuerySubmitted"
-                            PlaceholderText="Blob search by name."/>
+                            PlaceholderText="Search blob by name."/>
 
             <TextBlock Text="Container:" 
                        Grid.Column="5"

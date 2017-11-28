@@ -14,7 +14,7 @@ namespace ConfigurationStorageManager
             set
             {
                 _newConnectionString = value;
-                OnPropertyChanged("NewConnectionString");
+                OnPropertyChanged(nameof(NewConnectionString));
             }
         }
 
@@ -25,7 +25,7 @@ namespace ConfigurationStorageManager
             set
             {
                 _newConnectionName = value;
-                OnPropertyChanged("NewConnectionName");
+                OnPropertyChanged(nameof(NewConnectionName));
             }
         }
 
@@ -36,7 +36,7 @@ namespace ConfigurationStorageManager
             set
             {
                 _isEnabled = value;
-                OnPropertyChanged("IsEnabled");
+                OnPropertyChanged(nameof(IsEnabled));
             }
         }
 
@@ -47,7 +47,7 @@ namespace ConfigurationStorageManager
             set
             {
                 _showPasswordParam = value;
-                OnPropertyChanged("ShowPasswordParam");
+                OnPropertyChanged(nameof(ShowPasswordParam));
             }
         }
 
