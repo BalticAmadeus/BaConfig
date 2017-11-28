@@ -20,8 +20,10 @@ namespace ConfigurationStorageManager
 
         private ObservableCollection<CloudBlobContainer> _containerDropBoxItems = new ObservableCollection<CloudBlobContainer>();
         private ObservableCollection<ConnectionModel> _connectionDropBoxItems = new ObservableCollection<ConnectionModel>();
-        private ObservableCollection<CloudBlockBlob> _blobListItems = new ObservableCollection<CloudBlockBlob>();
+        private ObservableCollection<CloudBlockBlob> _blobListViewItems = new ObservableCollection<CloudBlockBlob>();
         private ObservableCollection<string> _searchSuggestions = new ObservableCollection<string>();
+
+        private CloudStorageService _storageClient;
 
         public event PropertyChangedEventHandler PropertyChanged;
         public void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
@@ -32,20 +34,20 @@ namespace ConfigurationStorageManager
             GetConnectionsFromStorage();
 
             HideBlobControls();
-            BlobList.Visibility = Visibility.Collapsed;
+            BlobListView.Visibility = Visibility.Collapsed;
             ReconnectButton.Visibility = Visibility.Collapsed;
-            AddNewBlobButton.Visibility = Visibility.Collapsed;
+            AddBlobButton.Visibility = Visibility.Collapsed;
         }
 
         #region Buttons_Click
-        private void EditButton_Click(object sender, RoutedEventArgs e)
+        private void EditConnectionsButton_Click(object sender, RoutedEventArgs e)
         {
             this.Frame.Navigate(typeof(StorageSelectionPage), _connectionDropBoxItems);
         }
 
-        private async void SaveButton_Click(object sender, RoutedEventArgs e)
+        private async void SaveBlobButton_Click(object sender, RoutedEventArgs e)
         {
-            var selectedBlob = (CloudBlockBlob)BlobList.SelectedItem;
+            var selectedBlob = (CloudBlockBlob)BlobListView.SelectedItem;
             if (selectedBlob == null) return;
 
             var contentText = BlobContentTxt.Text;
@@ -57,45 +59,44 @@ namespace ConfigurationStorageManager
 
             try
             {
-                MessageText.Text = "Working ...";
-                await CloudStorageManagetment.UploadDataToBlobAsync(selectedBlob, contentText);
+                InfoMessageText.Text = "Working ...";
+                await _storageClient.UploadDataToBlobAsync(selectedBlob, contentText);
                 await ShowMessageToUser($"Blob {selectedBlob.Name} content have been saved.");
             }
             catch (Exception ex)
             {
-                MessageText.Text = "";
+                InfoMessageText.Text = "";
                 await ShowDialogToUser(ex.Message);
             }
         }
 
-        private async void DeleteButton_CLick(object sender, RoutedEventArgs e)
+        private async void DeleteBlobButton_CLick(object sender, RoutedEventArgs e)
         {
-            var selectedBlob = (CloudBlockBlob)BlobList.SelectedItem;
+            var selectedBlob = (CloudBlockBlob)BlobListView.SelectedItem;
             if (selectedBlob == null) return;
 
-            var dialogYes = new UICommand("Yes", async cmd =>
-            {
-                try
-                {
-                    MessageText.Text = "Working ...";
-                    await CloudStorageManagetment.RemoveBlobAsync(selectedBlob);
-                    _blobListItems.Remove(selectedBlob);
-
-                    HideBlobControls();
-
-                    await ShowMessageToUser($"Blob \"{selectedBlob.Name}\" have been deleted.");
-                }
-                catch (Exception ex)
-                {
-                    await ShowDialogToUser(ex.Message);
-                }
-            });
-            var dialogNo = new UICommand("No");
-
             var deleteConfirmDialog = new MessageDialog($"Do you want to delete \"{selectedBlob.Name}\" blob ?");
-            deleteConfirmDialog.Commands.Add(dialogYes);
-            deleteConfirmDialog.Commands.Add(dialogNo);
+            deleteConfirmDialog.Commands.Add(new UICommand("Yes", cmd => DeleteBlob(selectedBlob)));
+            deleteConfirmDialog.Commands.Add(new UICommand("No"));
             await deleteConfirmDialog.ShowAsync();
+        }
+
+        private async void DeleteBlob(CloudBlockBlob blob)
+        {
+            try
+            {
+                InfoMessageText.Text = "Working ...";
+                await _storageClient.RemoveBlobAsync(blob);
+                _blobListViewItems.Remove(blob);
+
+                HideBlobControls();
+
+                await ShowMessageToUser($"Blob \"{blob.Name}\" have been deleted.");
+            }
+            catch (Exception ex)
+            {
+                await ShowDialogToUser(ex.Message);
+            }
         }
 
         private void ReconnectButton_Click(object sender, RoutedEventArgs e)
@@ -103,32 +104,31 @@ namespace ConfigurationStorageManager
             ConnectToStorage();
         }
 
-        private async void AddNewBlobButton_Click(object sender, RoutedEventArgs e)
+        private async void AddBlobButton_Click(object sender, RoutedEventArgs e)
         {
             DisableSelection();
             try
             {
-                var newBlobDialog = new NewBlobDialog(_blobListItems);
+                var newBlobDialog = new NewBlobDialog(_blobListViewItems);
                 var dialogResults = await newBlobDialog.ShowAsync();
                 if (dialogResults == ContentDialogResult.Secondary)
                 {
+                    InfoMessageText.Text = "Working ...";
 
-                    MessageText.Text = "Working ...";
-
-                    var newBlob = await CloudStorageManagetment.AddNewBlobAsync((CloudBlobContainer)ContainerDropBoxList.SelectedItem, newBlobDialog.BlobName, "");
-                    _blobListItems.Add(newBlob);
-                    OnPropertyChanged(nameof(_blobListItems));
+                    var newBlob = await _storageClient.AddBlobAsync((CloudBlobContainer)ContainerDropBox.SelectedItem, newBlobDialog.BlobName, "");
+                    _blobListViewItems.Add(newBlob);
+                    OnPropertyChanged(nameof(_blobListViewItems));
 
                     EnableSelection();
 
-                    BlobList.SelectedItem = newBlob;
+                    BlobListView.SelectedItem = newBlob;
                     await ShowMessageToUser($"Blob \"{newBlobDialog.BlobName}\" have been created.");
                 }
                 EnableSelection();
             }
             catch (Exception ex)
             {
-                MessageText.Text = "";
+                InfoMessageText.Text = "";
                 await ShowDialogToUser(ex.Message);
                 EnableSelection();
             }
@@ -137,42 +137,42 @@ namespace ConfigurationStorageManager
         #endregion
 
         #region Lists_SelectionChanged
-        private void ConnectionList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void ConnectionDropBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             ConnectToStorage();
         }
 
-        private async void BlobList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private async void BlobListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var selectedBlob = (CloudBlockBlob)BlobList.SelectedItem;
+            var selectedBlob = (CloudBlockBlob)BlobListView.SelectedItem;
             if (selectedBlob == null) return;
             await PopulateBlob(selectedBlob);
         }
 
-        private async void ContainerDropBoxList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private async void ContainerDropBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             DisableSelection();
             HideBlobControls();
-            BlobList.Visibility = Visibility.Collapsed;
+            BlobListView.Visibility = Visibility.Collapsed;
 
-            var selectedContainer = (CloudBlobContainer)ContainerDropBoxList.SelectedItem;
+            var selectedContainer = (CloudBlobContainer)ContainerDropBox.SelectedItem;
             if (selectedContainer == null) return;
 
             try
             {
-                MessageText.Text = "Working ...";
-                var containerBlobSegment = await CloudStorageManagetment.GetBlobsFromCloudAsync(selectedContainer);
-                 _blobListItems = new ObservableCollection<CloudBlockBlob>(containerBlobSegment.Results.ToList().Cast<CloudBlockBlob>().ToList());
-                OnPropertyChanged(nameof(_blobListItems));
-                BlobList.Visibility = Visibility.Visible;
-                AddNewBlobButton.Visibility = Visibility.Visible;
+                InfoMessageText.Text = "Working ...";
+                var containerBlobSegment = await _storageClient.GetBlobsFromCloudAsync(selectedContainer);
+                 _blobListViewItems = new ObservableCollection<CloudBlockBlob>(containerBlobSegment.Results.ToList().Cast<CloudBlockBlob>().ToList());
+                OnPropertyChanged(nameof(_blobListViewItems));
+                BlobListView.Visibility = Visibility.Visible;
+                AddBlobButton.Visibility = Visibility.Visible;
             }
             catch (Exception ex)
             {
                 await ShowDialogToUser(ex.Message);
             }
 
-            MessageText.Text = "";
+            InfoMessageText.Text = "";
             EnableSelection();
         }
 
@@ -195,17 +195,17 @@ namespace ConfigurationStorageManager
         {
             DisableSelection();
             HideBlobControls();
-            BlobList.Visibility = Visibility.Collapsed;
-            AddNewBlobButton.Visibility = Visibility.Collapsed;
+            BlobListView.Visibility = Visibility.Collapsed;
+            AddBlobButton.Visibility = Visibility.Collapsed;
 
-            var connection = (ConnectionModel)ConnectionList.SelectedItem;
+            var connection = (ConnectionModel)ConnectionDropBox.SelectedItem;
             if (connection == null) return;
 
             _containerDropBoxItems.Clear();
-            _blobListItems.Clear();
+            _blobListViewItems.Clear();
 
-            var isConnectedToStorage = CloudStorageManagetment.CreateConnectionWithCloud(connection.ConnectionString);
-            if (!isConnectedToStorage)
+            _storageClient = new CloudStorageService(connection.ConnectionString);
+            if (!_storageClient.IsConnected)
             {
                 await ShowDialogToUser("Error: Failed to connect to cloud storage !");
                 ReconnectButton.Visibility = Visibility.Visible;
@@ -215,14 +215,14 @@ namespace ConfigurationStorageManager
 
             try
             {
-                MessageText.Text = "Working ...";
-                await PopulateContainerDropBoxList();
+                InfoMessageText.Text = "Working ...";
+                await PopulateContainerDropBox();
                 EnableSelection();
                 await ShowMessageToUser("Successfully connected to cloud storage.");
             }
             catch (Exception ex)
             {
-                MessageText.Text = "";
+                InfoMessageText.Text = "";
                 await ShowDialogToUser(ex.InnerException.Message);
 
                 ReconnectButton.Visibility = Visibility.Visible;
@@ -230,7 +230,7 @@ namespace ConfigurationStorageManager
             }
         }
 
-        private async void GetConnectionsFromStorage()
+        private void GetConnectionsFromStorage()
         {
             try
             {
@@ -248,15 +248,12 @@ namespace ConfigurationStorageManager
                     });
                 }
             }
-            catch(Exception ex)
-            {
-                await ShowDialogToUser(ex.Message);
-            }
+            catch{}
         }
 
-        private async Task PopulateContainerDropBoxList()
+        private async Task PopulateContainerDropBox()
         {
-            var containerSegment = await CloudStorageManagetment.GetContainersFromCloudAsync();
+            var containerSegment = await _storageClient.GetContainersFromCloudAsync();
             _containerDropBoxItems = new ObservableCollection<CloudBlobContainer>(containerSegment.Results.ToList());
             OnPropertyChanged(nameof(_containerDropBoxItems));
         }
@@ -267,8 +264,8 @@ namespace ConfigurationStorageManager
 
             try
             {
-                MessageText.Text = "Working ...";
-                var blobData = await CloudStorageManagetment.GetDataFromBlobAsync(blob);
+                InfoMessageText.Text = "Working ...";
+                var blobData = await _storageClient.GetDataFromBlobAsync(blob);
                 BlobNameTxt.Text = blob.Name;
                 BlobContentTxt.Text = blobData;
                 ShowBlobControls();
@@ -278,15 +275,15 @@ namespace ConfigurationStorageManager
                 await ShowDialogToUser(ex.Message);
             }
 
-            MessageText.Text = "";
+            InfoMessageText.Text = "";
             EnableSelection();
         }
 
         private  async Task ShowMessageToUser(string message)
         {
-            MessageText.Text = message;
+            InfoMessageText.Text = message;
             await Task.Delay(3500);
-            MessageText.Text = "";
+            InfoMessageText.Text = "";
         }
 
         private async Task ShowDialogToUser(string message)
@@ -302,13 +299,13 @@ namespace ConfigurationStorageManager
                 if (sender.Text.Count() > 0)
                 {
                     _searchSuggestions = new ObservableCollection<string>
-                        (_blobListItems.Select(x => x.Name).Cast<string>()
+                        (_blobListViewItems.Select(x => x.Name).Cast<string>()
                         .Where(x=>x.IndexOf(sender.Text, StringComparison.CurrentCultureIgnoreCase)>= 0));
                     OnPropertyChanged(nameof(_searchSuggestions));
                 }
                 else
                 {
-                    _searchSuggestions = new ObservableCollection<string>(_blobListItems.Select(x=>x.Name).Cast<string>());
+                    _searchSuggestions = new ObservableCollection<string>(_blobListViewItems.Select(x=>x.Name).Cast<string>());
                     OnPropertyChanged(nameof(_searchSuggestions));
                 }
             }
@@ -317,13 +314,13 @@ namespace ConfigurationStorageManager
         private void SearchBlobTxt_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
         {
             if(args.ChosenSuggestion != null)
-                BlobList.SelectedItem = _blobListItems.Single(x => x.Name.Equals((string)args.ChosenSuggestion));
+                BlobListView.SelectedItem = _blobListViewItems.Single(x => x.Name.Equals((string)args.ChosenSuggestion));
         }
 
         private void HideBlobControls()
         {
-            SaveButton.Visibility = Visibility.Collapsed;
-            DeletButton.Visibility = Visibility.Collapsed;
+            SaveBlobButton.Visibility = Visibility.Collapsed;
+            DeleteBlobButton.Visibility = Visibility.Collapsed;
             BlobNameTxt.Visibility = Visibility.Collapsed;
             BlobContentTxt.Visibility = Visibility.Collapsed;
         }
@@ -332,20 +329,20 @@ namespace ConfigurationStorageManager
         {
             BlobContentTxt.Visibility = Visibility.Visible;
             BlobNameTxt.Visibility = Visibility.Visible;
-            SaveButton.Visibility = Visibility.Visible;
-            DeletButton.Visibility = Visibility.Visible;
+            SaveBlobButton.Visibility = Visibility.Visible;
+            DeleteBlobButton.Visibility = Visibility.Visible;
         }
 
         private void EnableSelection()
         {
-            ContainerDropBoxList.IsEnabled = true;
-            ConnectionList.IsEnabled = true;
+            ContainerDropBox.IsEnabled = true;
+            ConnectionDropBox.IsEnabled = true;
         }
 
         private void DisableSelection()
         {
-            ContainerDropBoxList.IsEnabled = false;
-            ConnectionList.IsEnabled = false;
+            ContainerDropBox.IsEnabled = false;
+            ConnectionDropBox.IsEnabled = false;
         }
     }
 }
