@@ -50,6 +50,17 @@ namespace ConfigurationStorageManager
         {
             var blob = container.GetBlockBlobReference(blobName);
             await blob.UploadTextAsync(content);
+
+            if (blobName.EndsWith(".json"))
+            {
+                blob.Properties.ContentType = "application/json";
+                await blob.SetPropertiesAsync();
+            }
+            else if (blobName.EndsWith(".txt"))
+            { 
+                blob.Properties.ContentType = "text/plain";
+                await blob.SetPropertiesAsync();
+            }
             return blob;
         }
 

@@ -124,6 +124,7 @@ namespace ConfigurationStorageManager
                     BlobList.SelectedItem = newBlob;
                     await ShowMessageToUser($"Blob \"{newBlobDialog.BlobName}\" have been created.");
                 }
+                EnableSelection();
             }
             catch (Exception ex)
             {
