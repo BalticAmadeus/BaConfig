@@ -8,6 +8,8 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.Security.Credentials;
+using Windows.Storage;
+using Windows.Storage.Pickers;
 using Windows.UI.Popups;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -35,6 +37,8 @@ namespace ConfigurationStorageManager
 
             HideBlobControls();
             BlobListView.Visibility = Visibility.Collapsed;
+            SearchBlobTxt.Visibility = Visibility.Collapsed;
+
             ReconnectButton.Visibility = Visibility.Collapsed;
             AddBlobButton.Visibility = Visibility.Collapsed;
         }
@@ -140,6 +144,24 @@ namespace ConfigurationStorageManager
             }
         }
 
+        private async void SaveContainerButton_Click(object sender, RoutedEventArgs e)
+        {
+            var selectedContainer = (CloudBlobContainer)ContainerDropBox.SelectedItem;
+            if(selectedContainer == null)
+            {
+                await ShowDialogToUser("You have not selected a container.");
+                return;
+            }
+
+            var folderPicker = new FolderPicker { SuggestedStartLocation = PickerLocationId.Desktop };
+            folderPicker.FileTypeFilter.Add("*");
+            var selectedFolder = await folderPicker.PickSingleFolderAsync();
+            if (selectedFolder == null) return;
+
+            await LocalStorage.SaveContainerInSelectedFolder(selectedFolder, _storageClient, selectedContainer);
+            await ShowMessageToUser($"Container have been saved in :\"{selectedFolder.Path}\"");
+        }
+
         #endregion
 
         #region Lists_SelectionChanged
@@ -160,6 +182,7 @@ namespace ConfigurationStorageManager
             DisableSelection();
             HideBlobControls();
             BlobListView.Visibility = Visibility.Collapsed;
+            SearchBlobTxt.Visibility = Visibility.Collapsed;
 
             var selectedContainer = (CloudBlobContainer)ContainerDropBox.SelectedItem;
             if (selectedContainer == null) return;
@@ -171,6 +194,7 @@ namespace ConfigurationStorageManager
                  _blobListViewItems = new ObservableCollection<CloudBlockBlob>(containerBlobSegment.Results.ToList().Cast<CloudBlockBlob>().ToList());
                 OnPropertyChanged(nameof(_blobListViewItems));
                 BlobListView.Visibility = Visibility.Visible;
+                SearchBlobTxt.Visibility = Visibility.Visible;
                 AddBlobButton.Visibility = Visibility.Visible;
             }
             catch (Exception ex)
@@ -202,6 +226,7 @@ namespace ConfigurationStorageManager
             DisableSelection();
             HideBlobControls();
             BlobListView.Visibility = Visibility.Collapsed;
+            SearchBlobTxt.Visibility = Visibility.Collapsed;
             AddBlobButton.Visibility = Visibility.Collapsed;
 
             var connection = (ConnectionModel)ConnectionDropBox.SelectedItem;
