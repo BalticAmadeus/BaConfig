@@ -18,7 +18,10 @@ namespace ConfigurationStorageManager
                 _client = cloudAccount.CreateCloudBlobClient();
                 IsConnected = true;
             }
-            IsConnected = false;
+            else
+            {
+                IsConnected = false;
+            }
         }
 
         public async Task<ContainerResultSegment> GetContainersFromCloudAsync()

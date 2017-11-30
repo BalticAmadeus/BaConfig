@@ -12,7 +12,6 @@ namespace ConfigurationStorageManager
 {
     public sealed partial class StorageSelectionPage : Page
     {
-        private const string VAULT_NAME = "ConnectionStrings";
         private ObservableCollection<ConnectionModel> _connectionList;
 
         public StorageSelectionPage()
@@ -43,7 +42,7 @@ namespace ConfigurationStorageManager
                     connection.NewConnectionString = connection.ConnectionString;
                     return;
                 }
-                SaveConnectionToStorage(connection);
+                ConnectionStorageService.SaveConnectionToStorage(connection);
             }
             else
             {
@@ -57,7 +56,7 @@ namespace ConfigurationStorageManager
         {
             var deleteButton = (Button)e.OriginalSource;
             var connection = (ConnectionModel)deleteButton.DataContext;
-            DeleteConnectionFromStorage(connection);
+            ConnectionStorageService.DeleteConnectionFromStorage(connection);
             _connectionList.Remove(connection);
         }
 
@@ -91,7 +90,7 @@ namespace ConfigurationStorageManager
             ConnectionNameTxt.Text = "";
             ConnectionStringTxt.Text = "";
 
-            SaveConnectionToStorage(newConnection);
+            ConnectionStorageService.SaveConnectionToStorage(newConnection);
             _connectionList.Add(newConnection);
         }
         #endregion
@@ -107,10 +106,7 @@ namespace ConfigurationStorageManager
 
             if (!_connectionList.Count().Equals(0))
             {
-                var storage = new PasswordVault();
-                var connectionListFromStorage = storage.FindAllByResource(VAULT_NAME);
-
-                if (connectionListFromStorage.SingleOrDefault(x => x.UserName.Equals(ConnectionNameTxt.Text)) != null)
+                if (!ConnectionStorageService.IsUniqueConnectionName(connectionName))
                 {
                     var errorMessage = new MessageDialog("Such connection name already exists.");
                     await errorMessage.ShowAsync();
@@ -118,34 +114,6 @@ namespace ConfigurationStorageManager
                 }
             }
             return true;
-        }
-
-        private void SaveConnectionToStorage(ConnectionModel connection)
-        {
-            var storage = new PasswordVault();
-            try
-            {
-                storage.Retrieve(VAULT_NAME, connection.ConnectionName);
-                UpdateConnectionToStorage(connection);
-            }
-            catch
-            {
-                storage.Add(new PasswordCredential(VAULT_NAME, connection.NewConnectionName, connection.NewConnectionString));
-            }
-        }
-
-        private void UpdateConnectionToStorage(ConnectionModel connection)
-        {
-            var storage = new PasswordVault();
-            storage.Remove(new PasswordCredential(VAULT_NAME, connection.ConnectionName, connection.ConnectionString));
-            storage.Add(new PasswordCredential(VAULT_NAME, connection.NewConnectionName, connection.NewConnectionString));
-            connection.UpdateConnection();
-        }
-
-        private void DeleteConnectionFromStorage(ConnectionModel connection)
-        {
-            var storage = new PasswordVault();
-            storage.Remove(new PasswordCredential(VAULT_NAME, connection.ConnectionName, connection.NewConnectionString));
         }
     }
 }

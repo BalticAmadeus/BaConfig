@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.Security.Credentials;
@@ -19,7 +20,7 @@ namespace ConfigurationStorageManager
         private const string VAULT_NAME = "ConnectionStrings";
 
         private ObservableCollection<CloudBlobContainer> _containerDropBoxItems = new ObservableCollection<CloudBlobContainer>();
-        private ObservableCollection<ConnectionModel> _connectionDropBoxItems = new ObservableCollection<ConnectionModel>();
+        private ObservableCollection<ConnectionModel> _connectionDropBoxItems;
         private ObservableCollection<CloudBlockBlob> _blobListViewItems = new ObservableCollection<CloudBlockBlob>();
         private ObservableCollection<string> _searchSuggestions = new ObservableCollection<string>();
 
@@ -31,12 +32,17 @@ namespace ConfigurationStorageManager
         public MainPage()
         {
             this.InitializeComponent();
-            GetConnectionsFromStorage();
 
             HideBlobControls();
             BlobListView.Visibility = Visibility.Collapsed;
             ReconnectButton.Visibility = Visibility.Collapsed;
             AddBlobButton.Visibility = Visibility.Collapsed;
+        }
+
+        private void MainPage_Loaded(object sender, RoutedEventArgs e)
+        {
+            _connectionDropBoxItems =  ConnectionStorageService.GetAllConnectionsFromStorage();
+            OnPropertyChanged(nameof(_connectionDropBoxItems));
         }
 
         #region Buttons_Click
@@ -101,7 +107,7 @@ namespace ConfigurationStorageManager
 
         private void ReconnectButton_Click(object sender, RoutedEventArgs e)
         {
-            ConnectToStorage();
+            ConnectToCloud();
         }
 
         private async void AddBlobButton_Click(object sender, RoutedEventArgs e)
@@ -139,7 +145,7 @@ namespace ConfigurationStorageManager
         #region Lists_SelectionChanged
         private void ConnectionDropBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            ConnectToStorage();
+            ConnectToCloud();
         }
 
         private async void BlobListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -191,7 +197,7 @@ namespace ConfigurationStorageManager
             }
         }
 
-        private async void ConnectToStorage()
+        private async void ConnectToCloud()
         {
             DisableSelection();
             HideBlobControls();
@@ -228,27 +234,6 @@ namespace ConfigurationStorageManager
                 ReconnectButton.Visibility = Visibility.Visible;
                 EnableSelection();
             }
-        }
-
-        private void GetConnectionsFromStorage()
-        {
-            try
-            {
-                var vault = new PasswordVault();
-                var connectionListFromStorage = vault.FindAllByResource(VAULT_NAME);
-                foreach (var connection in connectionListFromStorage)
-                {
-                    connection.RetrievePassword();
-                    _connectionDropBoxItems.Add(new ConnectionModel
-                    {
-                        ConnectionName = connection.UserName,
-                        NewConnectionName = connection.UserName,
-                        ConnectionString = connection.Password,
-                        NewConnectionString = connection.Password
-                    });
-                }
-            }
-            catch{}
         }
 
         private async Task PopulateContainerDropBox()
