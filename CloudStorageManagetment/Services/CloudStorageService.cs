@@ -1,7 +1,10 @@
-﻿using Microsoft.WindowsAzure.Storage;
+﻿using System.Collections.Generic;
+using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
+using Windows.Storage;
 
 namespace ConfigurationStorageManager.Services
 {
@@ -57,6 +60,30 @@ namespace ConfigurationStorageManager.Services
         public async Task RemoveBlobAsync(CloudBlockBlob blob)
         {
             await blob.DeleteIfExistsAsync();
+        }
+
+        public async Task<List<CloudBlockBlob>> SaveFilesToSelectedContainer(IReadOnlyList<StorageFile> files, CloudBlobContainer container)
+        {
+            var newBlobs = new List<CloudBlockBlob>();
+            var localStorage = new LocalStorageService();
+            var blobList = (await GetBlobsFromCloudAsync(container)).Results
+                .Cast<CloudBlockBlob>().ToList();
+
+            foreach (var file in files)
+            {
+                var blobToSave = blobList.SingleOrDefault(x => x.Name.Equals(file.Name));
+                if (blobToSave == null)
+                {
+                    var newBlob = await AddBlobAsync(container, file.Name, await localStorage.OpenAndReadFileAsync(file));
+                    newBlobs.Add(newBlob);
+                }
+                else
+                {
+                    await UploadDataToBlobAsync(blobToSave,
+                        await localStorage.OpenAndReadFileAsync(file));
+                }
+            }
+            return newBlobs;
         }
     }
 }

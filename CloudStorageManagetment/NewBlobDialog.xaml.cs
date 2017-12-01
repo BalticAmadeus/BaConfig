@@ -31,29 +31,21 @@ namespace ConfigurationStorageManager
 
         private bool IsBlobValid(string blobName)
         {
-            if (blobName.Count().Equals(0))
+            if (!blobName.Any())
             {
                 ShowDialogToUser("Blob name or blob content can not be empty.");
                 return false;
             }
 
-            if (!IsBlobNameValid(blobName))
-            {
-                ShowDialogToUser($"Blob name {blobName} already exists.");
-                return false;
-            }
+            if (IsBlobNameValid(blobName)) return true;
 
-            return true;
+            ShowDialogToUser($"Blob name {blobName} already exists.");
+            return false;
         }
 
         private bool IsBlobNameValid(string blobName)
         {
-            foreach (var blob in _blobList)
-            {
-                if (blob.Name.Equals(blobName))
-                    return false;
-            }
-            return true;
+            return _blobList.All(blob => !blob.Name.Equals(blobName));
         }
 
         private async void ShowDialogToUser(string message)

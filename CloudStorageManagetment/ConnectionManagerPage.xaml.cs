@@ -6,6 +6,7 @@ using Windows.UI.Popups;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
+using ConfigurationStorageManager.Models;
 using ConfigurationStorageManager.Services;
 
 namespace ConfigurationStorageManager
@@ -13,7 +14,7 @@ namespace ConfigurationStorageManager
     public sealed partial class StorageSelectionPage : Page
     {
         private ObservableCollection<ConnectionModel> _connectionList;
-        private ConnectionStorageService _connectionStorage = new ConnectionStorageService();
+        private readonly ConnectionStorageService _connectionStorage = new ConnectionStorageService();
 
         public StorageSelectionPage()
         {
@@ -105,7 +106,7 @@ namespace ConfigurationStorageManager
                 return false;
             }
 
-            if (!_connectionList.Any())
+            if (_connectionList.Any())
             {
                 if (!_connectionStorage.IsUniqueConnectionName(connectionName))
                 {

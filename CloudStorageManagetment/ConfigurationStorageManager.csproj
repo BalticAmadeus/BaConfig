@@ -101,7 +101,7 @@
     </Compile>
     <Compile Include="Services\CloudStorageService.cs" />
     <Compile Include="Services\ConnectionStorageService.cs" />
-    <Compile Include="ConnectionModel.cs" />
+    <Compile Include="Models\ConnectionModel.cs" />
     <Compile Include="Services\LocalStorageService.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>

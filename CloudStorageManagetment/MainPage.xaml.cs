@@ -1,14 +1,18 @@
 ﻿using Microsoft.WindowsAzure.Storage.Blob;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.UI.Popups;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using ConfigurationStorageManager.Models;
 using ConfigurationStorageManager.Services;
 
 namespace ConfigurationStorageManager
@@ -30,11 +34,11 @@ namespace ConfigurationStorageManager
             this.InitializeComponent();
 
             HideBlobControls();
-            BlobListView.Visibility = Visibility.Collapsed;
+            
             SearchBlobTxt.Visibility = Visibility.Collapsed;
 
             ReconnectButton.Visibility = Visibility.Collapsed;
-            AddBlobButton.Visibility = Visibility.Collapsed;
+            HideBlobListControls();
         }
 
         private void MainPage_Loaded(object sender, RoutedEventArgs e)
@@ -84,24 +88,6 @@ namespace ConfigurationStorageManager
             deleteConfirmDialog.Commands.Add(new UICommand("Yes", cmd => DeleteBlob(selectedBlob)));
             deleteConfirmDialog.Commands.Add(new UICommand("No"));
             await deleteConfirmDialog.ShowAsync();
-        }
-
-        private async void DeleteBlob(CloudBlockBlob blob)
-        {
-            try
-            {
-                InfoMessageText.Text = "Working ...";
-                await _storageClient.RemoveBlobAsync(blob);
-                _blobListViewItems.Remove(blob);
-
-                HideBlobControls();
-
-                await ShowMessageToUser($"Blob \"{blob.Name}\" have been deleted.");
-            }
-            catch (Exception ex)
-            {
-                await ShowDialogToUser(ex.Message);
-            }
         }
 
         private void ReconnectButton_Click(object sender, RoutedEventArgs e)
@@ -159,6 +145,36 @@ namespace ConfigurationStorageManager
             await ShowMessageToUser($"Container have been saved in :\"{selectedFolder.Path}\"");
         }
 
+        private async void LoadToContainerButton_Click(object sender, RoutedEventArgs e)
+        {
+            var selectedContainer = (CloudBlobContainer)ContainerDropBox.SelectedItem;
+            if (selectedContainer == null)
+            {
+                await ShowDialogToUser("You have not selected a container.");
+                return;
+            }
+
+            var folderPicker = new FolderPicker { SuggestedStartLocation = PickerLocationId.Desktop };
+            folderPicker.FileTypeFilter.Add("*");
+            var selectedFolder = await folderPicker.PickSingleFolderAsync();
+            if (selectedFolder == null) return;
+            
+            InfoMessageText.Text = "Working ...";
+            var newBlobList = await _storageClient.SaveFilesToSelectedContainer(await selectedFolder.GetFilesAsync(), selectedContainer);
+            newBlobList.ForEach(x=> _blobListViewItems.Add(x));
+            await ShowMessageToUser("All data from files have been loaded.");
+        }
+
+        private async void DeleteMBlobButton_Click(object sender, RoutedEventArgs e)
+        {
+            var selectedBlobs = BlobListView.SelectedItems.Cast<CloudBlockBlob>().ToList();
+            if (!selectedBlobs.Any()) return;
+
+            var deleteConfirmDialog = new MessageDialog("Do you want to delete selected blobs ?");
+            deleteConfirmDialog.Commands.Add(new UICommand("Yes", cmd => DeleteBlobList(selectedBlobs)));
+            deleteConfirmDialog.Commands.Add(new UICommand("No"));
+            await deleteConfirmDialog.ShowAsync();
+        }
         #endregion
 
         #region Lists_SelectionChanged
@@ -171,14 +187,17 @@ namespace ConfigurationStorageManager
         {
             var selectedBlob = (CloudBlockBlob)BlobListView.SelectedItem;
             if (selectedBlob == null) return;
+            if(BlobListView.SelectedItems.Count == 1)
             await PopulateBlob(selectedBlob);
+
+
         }
 
         private async void ContainerDropBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             DisableSelection();
             HideBlobControls();
-            BlobListView.Visibility = Visibility.Collapsed;
+            HideBlobListControls();
             SearchBlobTxt.Visibility = Visibility.Collapsed;
 
             var selectedContainer = (CloudBlobContainer)ContainerDropBox.SelectedItem;
@@ -190,9 +209,8 @@ namespace ConfigurationStorageManager
                 var containerBlobSegment = await _storageClient.GetBlobsFromCloudAsync(selectedContainer);
                  _blobListViewItems = new ObservableCollection<CloudBlockBlob>(containerBlobSegment.Results.ToList().Cast<CloudBlockBlob>().ToList());
                 OnPropertyChanged(nameof(_blobListViewItems));
-                BlobListView.Visibility = Visibility.Visible;
+                ShowBlobListControls();
                 SearchBlobTxt.Visibility = Visibility.Visible;
-                AddBlobButton.Visibility = Visibility.Visible;
             }
             catch (Exception ex)
             {
@@ -225,6 +243,7 @@ namespace ConfigurationStorageManager
             BlobListView.Visibility = Visibility.Collapsed;
             SearchBlobTxt.Visibility = Visibility.Collapsed;
             AddBlobButton.Visibility = Visibility.Collapsed;
+            DeleteMBlobsButton.Visibility = Visibility.Collapsed;
 
             var connection = (ConnectionModel)ConnectionDropBox.SelectedItem;
             if (connection == null) return;
@@ -322,6 +341,43 @@ namespace ConfigurationStorageManager
                 BlobListView.SelectedItem = _blobListViewItems.Single(x => x.Name.Equals((string)args.ChosenSuggestion));
         }
 
+        private async void DeleteBlob(CloudBlockBlob blob)
+        {
+            try
+            {
+                InfoMessageText.Text = "Working ...";
+                await _storageClient.RemoveBlobAsync(blob);
+                _blobListViewItems.Remove(blob);
+
+                HideBlobControls();
+
+                await ShowMessageToUser($"Blob \"{blob.Name}\" have been deleted.");
+            }
+            catch (Exception ex)
+            {
+                await ShowDialogToUser(ex.Message);
+            }
+        }
+
+        private async void DeleteBlobList(List<CloudBlockBlob> blobList)
+        {
+            InfoMessageText.Text = "Working ...";
+            foreach (var blob in blobList)
+            {
+                try
+                {
+                    await _storageClient.RemoveBlobAsync(blob);
+                    _blobListViewItems.Remove(blob);
+                    HideBlobControls();
+                }
+                catch (Exception ex)
+                {
+                    await ShowDialogToUser(ex.Message);
+                }
+            }
+            await ShowMessageToUser($"Selected blobs have been deleted.");
+        }
+
         private void HideBlobControls()
         {
             SaveBlobButton.Visibility = Visibility.Collapsed;
@@ -348,6 +404,20 @@ namespace ConfigurationStorageManager
         {
             ContainerDropBox.IsEnabled = false;
             ConnectionDropBox.IsEnabled = false;
+        }
+
+        private void ShowBlobListControls()
+        {
+            BlobListView.Visibility = Visibility.Visible;
+            AddBlobButton.Visibility = Visibility.Visible;
+            DeleteMBlobsButton.Visibility = Visibility.Visible;
+        }
+
+        private void HideBlobListControls()
+        {
+            BlobListView.Visibility = Visibility.Collapsed;
+            AddBlobButton.Visibility = Visibility.Collapsed;
+            DeleteMBlobsButton.Visibility = Visibility.Collapsed;
         }
     }
 }

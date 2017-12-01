@@ -16,18 +16,28 @@ namespace ConfigurationStorageManager.Services
             
             foreach (var blob in blobsToSave)
             {
-                    SaveContentInFile(await folder.CreateFileAsync(blob.Name, CreationCollisionOption.ReplaceExisting),
+                    OpenAndSaveFile(await folder.CreateFileAsync(blob.Name, CreationCollisionOption.ReplaceExisting),
                         await client.GetDataFromBlobAsync(blob));
             }
         }
 
-        public async void SaveContentInFile(StorageFile file, string content)
+        public async void OpenAndSaveFile(StorageFile file, string content)
         {
             using (var streamWriter = new StreamWriter(await file.OpenStreamForWriteAsync()))
             {
                 streamWriter.BaseStream.SetLength(0);
                 streamWriter.Write(content);
             }
+        }
+
+        public async Task<string> OpenAndReadFileAsync(StorageFile file)
+        {
+            var fileContent = "";
+            using (var streamReader = new StreamReader(await file.OpenStreamForReadAsync()))
+            {
+                fileContent = streamReader.ReadToEnd();
+            }
+            return fileContent;
         }
     }
 }

@@ -10,12 +10,10 @@
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Padding="30">
         
         <Grid.RowDefinitions>
-            <RowDefinition Height="auto"/>
-            <RowDefinition Height="auto"/>
-            <RowDefinition Height="auto"/>
-            <RowDefinition Height="auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="auto"/>
         </Grid.RowDefinitions>
         
         <Grid.ColumnDefinitions>
@@ -38,6 +36,7 @@
                 <ColumnDefinition Width="auto"/>
                 <ColumnDefinition Width="auto"/>
                 <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="auto"/>
                 <ColumnDefinition Width="auto"/>
                 <ColumnDefinition Width="auto"/>
                 <ColumnDefinition Width="auto"/>
@@ -80,6 +79,11 @@
                     Content="Save container" 
                     Grid.Column="7"
                     Click="SaveContainerButton_Click"/>
+            
+            <Button Margin="10,0,0,0" 
+                    Content="Load to container" 
+                    Grid.Column="8" 
+                    Click="LoadToContainerButton_Click"/>
         </Grid>
 
         <Border Margin="0,10,0,0" 
@@ -89,48 +93,63 @@
                 Height="2" 
                 Background="Gray"/>
 
-        <AutoSuggestBox x:Name="SearchBlobTxt"
-                        Grid.Column="0"
-                        Grid.Row="3"
-                        QueryIcon="Find"
-                        ItemsSource="{x:Bind _searchSuggestions, Mode=OneWay}"
-                        Margin="5"
-                        TextChanged="SearchBlobTxt_TextChanged"
-                        QuerySubmitted="SearchBlobTxt_QuerySubmitted"
-                        PlaceholderText="Search blob by name."/>
+        <Grid Grid.Column="0" Grid.Row="3">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
-        <ListView Header="Blobs"
-                  Grid.Row="4" 
-                  Grid.Column="0" 
-                  x:Name="BlobListView" 
-                  ItemsSource="{x:Bind _blobListViewItems, Mode=OneWay}"
-                  Width="240"
-                  Margin="0,10,0,0"
-                  ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                  ScrollViewer.HorizontalScrollMode="Enabled"
-                  ScrollViewer.IsHorizontalRailEnabled="True"
-                  SelectionChanged="BlobListView_SelectionChanged">
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <TextBlock Text="{Binding Name}"/>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
+            <AutoSuggestBox x:Name="SearchBlobTxt"
+                            Grid.Row="0"
+                            QueryIcon="Find"
+                            ItemsSource="{x:Bind _searchSuggestions, Mode=OneWay}"
+                            Margin="5"
+                            TextChanged="SearchBlobTxt_TextChanged"
+                            QuerySubmitted="SearchBlobTxt_QuerySubmitted"
+                            PlaceholderText="Search blob by name."/>
 
-        <Button x:Name="AddBlobButton"
-                Grid.Column="0" 
-                Grid.Row="5" 
-                Margin="0,10,0,0" 
-                Content="Add new blob." 
-                Width="200" 
-                Click="AddBlobButton_Click"/>
+            <ListView Header="Blobs"
+                      Grid.Row="1" 
+                      x:Name="BlobListView" 
+                      ItemsSource="{x:Bind _blobListViewItems, Mode=OneWay}"
+                      Width="240"
+                      SelectionMode="Extended"
+                      Margin="0,10,0,0"
+                      ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                      ScrollViewer.HorizontalScrollMode="Enabled"
+                      ScrollViewer.IsHorizontalRailEnabled="True"
+                      SelectionChanged="BlobListView_SelectionChanged">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Name}"/>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+            
+            <Button x:Name="AddBlobButton"
+                    Grid.Row="2" 
+                    Margin="0,10,0,0" 
+                    Content="Add new blob." 
+                    Width="230" 
+                    Click="AddBlobButton_Click"/>
 
-        <Grid Grid.Row="3" Grid.Column="1" Grid.RowSpan="2">
+            <Button x:Name="DeleteMBlobsButton"
+                    Content="Delete selected blobs" 
+                    Grid.Row="3" 
+                    Width="230" 
+                    Margin="0,10,0,0"
+                    Click="DeleteMBlobButton_Click"/>
+        </Grid>
+
+        <Grid Grid.Row="3" Grid.Column="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="auto"/>
                 <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-            
+
             <TextBlock x:Name="BlobNameTxt" 
                        Text="BlobName"
                        Margin="0,10,0,10" 
@@ -138,7 +157,7 @@
                        Grid.ColumnSpan="2" 
                        HorizontalAlignment="Center" 
                        FontSize="20" />
-            
+
             <TextBox x:Name="BlobContentTxt" 
                      Header="Content:" 
                      AcceptsReturn="True" 
@@ -146,25 +165,27 @@
                      IsSpellCheckEnabled="False" 
                      Grid.Row="1" 
                      Margin="5,0,0,20"/>
+            <StackPanel Grid.Row="2"
+                        Orientation="Horizontal" 
+                        HorizontalAlignment="Right">
+
+                <Button x:Name="DeleteBlobButton"
+                        HorizontalAlignment="Right" 
+                        Padding="20,0,20,0"
+                        Margin="0,0,15,0"
+                        Visibility="Visible"
+                        Content="Delete blob"
+                        Click="DeleteBlobButton_CLick"/>
+
+                <Button x:Name="SaveBlobButton"
+                        HorizontalAlignment="Right" 
+                        Margin="0,0,15,0"
+                        Visibility="Visible"
+                        Padding="20,0,20,0" 
+                        Content="Save blob"
+                        Click="SaveBlobButton_Click"/>
+            </StackPanel>
+
         </Grid>
-
-        <StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right">
-
-            <Button x:Name="DeleteBlobButton"
-                    HorizontalAlignment="Right" 
-                    Padding="20,0,20,0"
-                    Margin="0,0,15,0"
-                    Visibility="Visible"
-                    Content="Delete blob"
-                    Click="DeleteBlobButton_CLick"/>
-
-            <Button x:Name="SaveBlobButton"
-                    HorizontalAlignment="Right" 
-                    Margin="0,0,15,0"
-                    Visibility="Visible"
-                    Padding="20,0,20,0" 
-                    Content="Save blob"
-                    Click="SaveBlobButton_Click"/>
-        </StackPanel>
     </Grid>
 </Page>

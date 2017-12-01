@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace ConfigurationStorageManager
+namespace ConfigurationStorageManager.Models
 {
     public class ConnectionModel : INotifyPropertyChanged
     {

@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using Windows.Security.Credentials;
 using Windows.UI.Popups;
+using ConfigurationStorageManager.Models;
 
 namespace ConfigurationStorageManager.Services
 {
