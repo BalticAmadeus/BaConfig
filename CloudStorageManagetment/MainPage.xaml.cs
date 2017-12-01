@@ -170,6 +170,7 @@ namespace ConfigurationStorageManager
             var selectedBlobs = BlobListView.SelectedItems.Cast<CloudBlockBlob>().ToList();
             if (!selectedBlobs.Any()) return;
 
+            BlobListView.SelectedIndex = -1;
             var deleteConfirmDialog = new MessageDialog("Do you want to delete selected blobs ?");
             deleteConfirmDialog.Commands.Add(new UICommand("Yes", cmd => DeleteBlobList(selectedBlobs)));
             deleteConfirmDialog.Commands.Add(new UICommand("No"));
@@ -189,8 +190,6 @@ namespace ConfigurationStorageManager
             if (selectedBlob == null) return;
             if(BlobListView.SelectedItems.Count == 1)
             await PopulateBlob(selectedBlob);
-
-
         }
 
         private async void ContainerDropBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -375,7 +374,7 @@ namespace ConfigurationStorageManager
                     await ShowDialogToUser(ex.Message);
                 }
             }
-            await ShowMessageToUser($"Selected blobs have been deleted.");
+            await ShowMessageToUser("Selected blobs have been deleted.");
         }
 
         private void HideBlobControls()

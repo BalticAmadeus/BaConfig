@@ -81,7 +81,7 @@
                     Click="SaveContainerButton_Click"/>
             
             <Button Margin="10,0,0,0" 
-                    Content="Load to container" 
+                    Content="Add to container" 
                     Grid.Column="8" 
                     Click="LoadToContainerButton_Click"/>
         </Grid>
