@@ -102,7 +102,7 @@
     <Compile Include="CloudStorageService.cs" />
     <Compile Include="ConnectionStorageService.cs" />
     <Compile Include="ConnectionModel.cs" />
-    <Compile Include="LocalStorage.cs" />
+    <Compile Include="LocalStorageService.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>

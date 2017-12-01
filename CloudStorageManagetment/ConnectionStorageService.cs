@@ -13,7 +13,7 @@ namespace ConfigurationStorageManager
     {
         private const string VAULT_NAME = "ConnectionStrings";
 
-        public async static void AddConnectionToStorage(ConnectionModel connection)
+        public async void AddConnectionToStorage(ConnectionModel connection)
         {
             var storage = new PasswordVault();
             try
@@ -27,7 +27,7 @@ namespace ConfigurationStorageManager
             }
         }
 
-        public static void SaveConnectionToStorage(ConnectionModel connection)
+        public void SaveConnectionToStorage(ConnectionModel connection)
         {
             var storage = new PasswordVault();
             try
@@ -41,7 +41,7 @@ namespace ConfigurationStorageManager
             }
         }
 
-        public async static void UpdateConnectionToStorage(ConnectionModel connection)
+        public async void UpdateConnectionToStorage(ConnectionModel connection)
         {
             var storage = new PasswordVault();
             storage.Remove(new PasswordCredential(VAULT_NAME, connection.ConnectionName, connection.ConnectionString));
@@ -59,13 +59,13 @@ namespace ConfigurationStorageManager
             connection.UpdateConnection();
         }
 
-        public static void DeleteConnectionFromStorage(ConnectionModel connection)
+        public void DeleteConnectionFromStorage(ConnectionModel connection)
         {
             var storage = new PasswordVault();
             storage.Remove(new PasswordCredential(VAULT_NAME, connection.ConnectionName, connection.NewConnectionString));
         }
 
-        public static ObservableCollection<ConnectionModel> GetAllConnectionsFromStorage()
+        public ObservableCollection<ConnectionModel> GetAllConnectionsFromStorage()
         {
             var vault = new PasswordVault();
             var connectionList = new ObservableCollection<ConnectionModel>();
@@ -89,7 +89,7 @@ namespace ConfigurationStorageManager
             return connectionList;
         }
 
-        public static bool IsUniqueConnectionName(string name)
+        public bool IsUniqueConnectionName(string name)
         {
             var storage = new PasswordVault();
             try

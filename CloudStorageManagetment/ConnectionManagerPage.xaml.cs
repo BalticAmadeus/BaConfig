@@ -13,6 +13,7 @@ namespace ConfigurationStorageManager
     public sealed partial class StorageSelectionPage : Page
     {
         private ObservableCollection<ConnectionModel> _connectionList;
+        private ConnectionStorageService _connectionStorage = new ConnectionStorageService();
 
         public StorageSelectionPage()
         {
@@ -42,7 +43,7 @@ namespace ConfigurationStorageManager
                     connection.NewConnectionString = connection.ConnectionString;
                     return;
                 }
-                ConnectionStorageService.SaveConnectionToStorage(connection);
+                _connectionStorage.SaveConnectionToStorage(connection);
             }
             else
             {
@@ -56,7 +57,7 @@ namespace ConfigurationStorageManager
         {
             var deleteButton = (Button)e.OriginalSource;
             var connection = (ConnectionModel)deleteButton.DataContext;
-            ConnectionStorageService.DeleteConnectionFromStorage(connection);
+            _connectionStorage.DeleteConnectionFromStorage(connection);
             _connectionList.Remove(connection);
         }
 
@@ -90,7 +91,7 @@ namespace ConfigurationStorageManager
             ConnectionNameTxt.Text = "";
             ConnectionStringTxt.Text = "";
 
-            ConnectionStorageService.SaveConnectionToStorage(newConnection);
+            _connectionStorage.SaveConnectionToStorage(newConnection);
             _connectionList.Add(newConnection);
         }
         #endregion
@@ -106,7 +107,7 @@ namespace ConfigurationStorageManager
 
             if (!_connectionList.Count().Equals(0))
             {
-                if (!ConnectionStorageService.IsUniqueConnectionName(connectionName))
+                if (!_connectionStorage.IsUniqueConnectionName(connectionName))
                 {
                     var errorMessage = new MessageDialog("Such connection name already exists.");
                     await errorMessage.ShowAsync();

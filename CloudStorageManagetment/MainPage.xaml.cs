@@ -45,7 +45,8 @@ namespace ConfigurationStorageManager
 
         private void MainPage_Loaded(object sender, RoutedEventArgs e)
         {
-            _connectionDropBoxItems =  ConnectionStorageService.GetAllConnectionsFromStorage();
+            var connectionStorage = new ConnectionStorageService();
+            _connectionDropBoxItems = connectionStorage.GetAllConnectionsFromStorage();
             OnPropertyChanged(nameof(_connectionDropBoxItems));
         }
 
@@ -158,7 +159,9 @@ namespace ConfigurationStorageManager
             var selectedFolder = await folderPicker.PickSingleFolderAsync();
             if (selectedFolder == null) return;
 
-            await LocalStorage.SaveContainerInSelectedFolder(selectedFolder, _storageClient, selectedContainer);
+            var localStorage = new LocalStorageService();
+            InfoMessageText.Text = "Working ...";
+            await localStorage.SaveContainerInSelectedFolder(selectedFolder, _storageClient, selectedContainer);
             await ShowMessageToUser($"Container have been saved in :\"{selectedFolder.Path}\"");
         }
 
