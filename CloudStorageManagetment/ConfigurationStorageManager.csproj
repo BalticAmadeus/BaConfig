@@ -99,10 +99,10 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
-    <Compile Include="CloudStorageService.cs" />
-    <Compile Include="ConnectionStorageService.cs" />
+    <Compile Include="Services\CloudStorageService.cs" />
+    <Compile Include="Services\ConnectionStorageService.cs" />
     <Compile Include="ConnectionModel.cs" />
-    <Compile Include="LocalStorageService.cs" />
+    <Compile Include="Services\LocalStorageService.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>

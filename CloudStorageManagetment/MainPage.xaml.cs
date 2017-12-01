@@ -1,26 +1,20 @@
 ﻿using Microsoft.WindowsAzure.Storage.Blob;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Windows.Security.Credentials;
-using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.UI.Popups;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
+using ConfigurationStorageManager.Services;
 
 namespace ConfigurationStorageManager
 {
     public sealed partial class MainPage : Page, INotifyPropertyChanged
     {
-        private const string VAULT_NAME = "ConnectionStrings";
-
         private ObservableCollection<CloudBlobContainer> _containerDropBoxItems = new ObservableCollection<CloudBlobContainer>();
         private ObservableCollection<ConnectionModel> _connectionDropBoxItems;
         private ObservableCollection<CloudBlockBlob> _blobListViewItems = new ObservableCollection<CloudBlockBlob>();
@@ -307,20 +301,18 @@ namespace ConfigurationStorageManager
 
         private void SearchBlobTxt_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
         {
-            if (args.Reason == AutoSuggestionBoxTextChangeReason.UserInput)
+            if (args.Reason != AutoSuggestionBoxTextChangeReason.UserInput) return;
+            if (sender.Text.Any())
             {
-                if (sender.Text.Count() > 0)
-                {
-                    _searchSuggestions = new ObservableCollection<string>
-                        (_blobListViewItems.Select(x => x.Name).Cast<string>()
-                        .Where(x=>x.IndexOf(sender.Text, StringComparison.CurrentCultureIgnoreCase)>= 0));
-                    OnPropertyChanged(nameof(_searchSuggestions));
-                }
-                else
-                {
-                    _searchSuggestions = new ObservableCollection<string>(_blobListViewItems.Select(x=>x.Name).Cast<string>());
-                    OnPropertyChanged(nameof(_searchSuggestions));
-                }
+                _searchSuggestions = new ObservableCollection<string>
+                (_blobListViewItems.Select(x => x.Name)
+                    .Where(x=>x.IndexOf(sender.Text, StringComparison.CurrentCultureIgnoreCase)>= 0));
+                OnPropertyChanged(nameof(_searchSuggestions));
+            }
+            else
+            {
+                _searchSuggestions = new ObservableCollection<string>(_blobListViewItems.Select(x=>x.Name));
+                OnPropertyChanged(nameof(_searchSuggestions));
             }
         }
 

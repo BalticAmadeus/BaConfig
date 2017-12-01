@@ -3,7 +3,7 @@ using Microsoft.WindowsAzure.Storage.Blob;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace ConfigurationStorageManager
+namespace ConfigurationStorageManager.Services
 {
     public class CloudStorageService
     {

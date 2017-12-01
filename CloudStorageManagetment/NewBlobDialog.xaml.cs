@@ -17,7 +17,6 @@ namespace ConfigurationStorageManager
             _blobList = blobList;
             this.InitializeComponent();
         }
-        
 
         private void CloseButton_Click(ContentDialog sender, ContentDialogButtonClickEventArgs args)
         {

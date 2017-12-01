@@ -10,7 +10,7 @@ namespace ConfigurationStorageManager
         private string _newConnectionString;
         public string NewConnectionString
         {
-            get { return _newConnectionString; }
+            get => _newConnectionString;
             set
             {
                 _newConnectionString = value;
@@ -21,7 +21,7 @@ namespace ConfigurationStorageManager
         private string _newConnectionName;
         public string NewConnectionName
         {
-            get { return _newConnectionName; }
+            get => _newConnectionName;
             set
             {
                 _newConnectionName = value;
@@ -29,10 +29,10 @@ namespace ConfigurationStorageManager
             }
         }
 
-        private bool _isEnabled = false;
+        private bool _isEnabled;
         public bool IsEnabled
         {
-            get { return _isEnabled; }
+            get => _isEnabled; 
             set
             {
                 _isEnabled = value;
@@ -43,7 +43,7 @@ namespace ConfigurationStorageManager
         private string _showPasswordParam = "Hidden";
         public string ShowPasswordParam
         {
-            get { return _showPasswordParam; }
+            get => _showPasswordParam; 
             set
             {
                 _showPasswordParam = value;

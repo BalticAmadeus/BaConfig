@@ -2,11 +2,11 @@
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
-using Windows.Security.Credentials;
 using Windows.UI.Popups;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
+using ConfigurationStorageManager.Services;
 
 namespace ConfigurationStorageManager
 {
@@ -105,7 +105,7 @@ namespace ConfigurationStorageManager
                 return false;
             }
 
-            if (!_connectionList.Count().Equals(0))
+            if (!_connectionList.Any())
             {
                 if (!_connectionStorage.IsUniqueConnectionName(connectionName))
                 {
