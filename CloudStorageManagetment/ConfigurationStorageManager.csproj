@@ -99,6 +99,8 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Models\BlobListItem.cs" />
+    <Compile Include="Properties\Annotations.cs" />
     <Compile Include="Services\CloudStorageService.cs" />
     <Compile Include="Services\ConnectionStorageService.cs" />
     <Compile Include="Models\ConnectionModel.cs" />
