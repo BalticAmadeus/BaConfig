@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using Microsoft.Extensions.Configuration;
 
@@ -16,7 +17,7 @@ namespace BalticAmadeus.Config
             builder.Add(new BaConfigSource(serviceName, required));
             return builder;
         }
-        
+
         public static IConfigurationBuilder AddStructuredCloudConfig(this IConfigurationBuilder builder, string serviceName)
         {
             var serviceBlobName = serviceName + ".json";
@@ -28,6 +29,17 @@ namespace BalticAmadeus.Config
                 .AddCloudConfig("globalSettings.secrets.json")
                 .AddCloudConfig(serviceBlobName)
                 .AddCloudConfig(serviceSecretBlobName);
+
+            var environmentString = Environment.GetEnvironmentVariable("BACONFIG_TARGET");
+            var endIndex = environmentString.IndexOf(';');
+            var envStrWithoutContainer = environmentString.Substring(endIndex + 1);
+
+            if (!envStrWithoutContainer.StartsWith("LocalFileOverride=")) return builder;
+
+            var beginIndex = envStrWithoutContainer.IndexOf('=');
+            endIndex = envStrWithoutContainer.IndexOf(';');
+            var filePath = envStrWithoutContainer.Substring(beginIndex + 1, endIndex - beginIndex - 1);
+            builder.AddJsonFile(filePath);
 
             return builder;
         }

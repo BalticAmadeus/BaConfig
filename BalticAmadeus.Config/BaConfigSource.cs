@@ -47,6 +47,12 @@ namespace BalticAmadeus.Config
             var containerName = environmentString.Substring(beginIndex + 1, endIndex - beginIndex - 1);
             var connectionString = environmentString.Substring(endIndex + 1);
 
+            if (connectionString.StartsWith("LocalFileOverride="))
+            {
+                endIndex = connectionString.IndexOf(';');
+                connectionString = connectionString.Substring(endIndex + 1);
+            }
+
             var blobContainer = CloudStorageAccount.Parse(connectionString).CreateCloudBlobClient().GetContainerReference(containerName);
 
             if (!blobContainer.ExistsAsync().Result)
