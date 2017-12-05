@@ -31,9 +31,10 @@ namespace BalticAmadeus.Config
                 .AddCloudConfig(serviceSecretBlobName);
 
             var environmentString = Environment.GetEnvironmentVariable("BACONFIG_TARGET");
+            if (environmentString == null) return builder;
+
             var endIndex = environmentString.IndexOf(';');
             var envStrWithoutContainer = environmentString.Substring(endIndex + 1);
-
             if (!envStrWithoutContainer.StartsWith("LocalFileOverride=")) return builder;
 
             var beginIndex = envStrWithoutContainer.IndexOf('=');
