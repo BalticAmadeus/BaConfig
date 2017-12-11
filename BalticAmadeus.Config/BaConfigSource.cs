@@ -8,35 +8,32 @@ namespace BalticAmadeus.Config
 {
     public class BaConfigSource : JsonConfigurationSource
     {
-        private string _blobName;
-        private bool _required;
+        private readonly string _blobName;
+        private string _connectionString;
 
-        public BaConfigSource(string blobName, bool required)
+        public BaConfigSource(string connectionString,string blobName, bool required)
         {
             _blobName = blobName;
-            _required = required;
+            Optional = !required;
+            _connectionString = connectionString;
         }
 
         public override IConfigurationProvider Build(IConfigurationBuilder builder)
         {
-            var environmentString = Environment.GetEnvironmentVariable("BACONFIG_TARGET");
-            if (environmentString == null)
+            string connectionString = _connectionString ?? Environment.GetEnvironmentVariable("BACONFIG_TARGET");
+
+            if (connectionString == null)
             {
                 Optional = true;
+                return new JsonConfigurationProvider(this);
             }
             else
             {
-                Optional = !_required;
-                if (!Optional)
-                {
-                    var blobBlock = GetBlobBlockReferenceFromCloud(environmentString);
-                    FileProvider = new BaConfigFileProvider(blobBlock);
-                }
+                return GetJsonConfigurationProvider(connectionString);
             }
-            return new JsonConfigurationProvider(this);
         }
 
-        public CloudBlockBlob GetBlobBlockReferenceFromCloud(string environmentString)
+        private CloudBlockBlob GetBlobBlockReferenceFromCloud(string environmentString)
         {
             if (!environmentString.StartsWith("ContainerName"))
                 throw new Exception("BACONFIG_TARGET format is invalid. Valid format: ContainerName=....;ConnectionString");
@@ -61,6 +58,13 @@ namespace BalticAmadeus.Config
             this.Path = $"{containerName}/{_blobName}";
 
             return blobContainer.GetBlockBlobReference(_blobName);
+        }
+
+        private JsonConfigurationProvider GetJsonConfigurationProvider(string connectionString)
+        {
+            var blobBlock = GetBlobBlockReferenceFromCloud(connectionString);
+            FileProvider = new BaConfigFileProvider(blobBlock);
+            return new JsonConfigurationProvider(this);
         }
     }
 }

@@ -2,11 +2,11 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netcoreapp2.0</TargetFrameworks>
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
     <Authors>Benas Budrys</Authors>
     <Company>Baltic Amadeus</Company>
     <Copyright>Copyright 2017</Copyright>
-    <PackageReleaseNotes>Added  "AddStructuredCloudConfig" extension for service configuration.</PackageReleaseNotes>
+    <PackageReleaseNotes>Added local file override, file path from environment string.</PackageReleaseNotes>
     <Description>Small ASP.NET Standart configuration extension witch uses Microsoft Blob Storage to get configurations. Configuration done by Microsoft.Extensions.Configuration and Microsoft.Extensions.Configuration.Json.</Description>
     <PackageLicenseUrl>https://github.com/BalticAmadeus/BaConfig/blob/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/BalticAmadeus/BaConfig</PackageProjectUrl>

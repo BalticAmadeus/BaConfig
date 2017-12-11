@@ -6,15 +6,29 @@ namespace BalticAmadeus.Config
 {
     public static class ConfigurationBuilderExtensions
     {
+        private static string _connectionString;
+
+        public static IConfigurationBuilder AddConnectionString(this IConfigurationBuilder biulder, string connectionString)
+        {
+            _connectionString = connectionString;
+            return biulder;
+        }
+
         public static IConfigurationBuilder AddCloudConfig(this IConfigurationBuilder builder, string serviceName)
         {
-            AddCloudConfig(builder, serviceName, required: true);
+            AddCloudConfig(builder, _connectionString, serviceName, required: true);
             return builder;
         }
 
         public static IConfigurationBuilder AddCloudConfig(this IConfigurationBuilder builder, string serviceName, bool required)
         {
-            builder.Add(new BaConfigSource(serviceName, required));
+            builder.Add(new BaConfigSource(_connectionString, serviceName, required));
+            return builder;
+        }
+
+        public static IConfigurationBuilder AddCloudConfig(this IConfigurationBuilder builder,string connectionString, string serviceName, bool required)
+        {
+            builder.Add(new BaConfigSource(connectionString, serviceName, required));
             return builder;
         }
 

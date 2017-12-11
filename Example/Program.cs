@@ -7,7 +7,7 @@ namespace Example
     {
         static void Main(string[] args)
         {
-            var config = new ConfigurationBuilder().AddStructuredCloudConfig("test")
+            var config = new ConfigurationBuilder().AddCloudConfig("configs")
                 .Build();
         }
     }
