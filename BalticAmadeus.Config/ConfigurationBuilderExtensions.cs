@@ -41,8 +41,8 @@ namespace BalticAmadeus.Config
                 .AddJsonFile("appsettings.json")
                 .AddCloudConfig("globalSettings.json")
                 .AddCloudConfig("globalSettings.secrets.json")
-                .AddCloudConfig(serviceBlobName)
-                .AddCloudConfig(serviceSecretBlobName);
+                .AddCloudConfig(serviceBlobName, required: false)
+                .AddCloudConfig(serviceSecretBlobName, required: false);
 
             var environmentString = Environment.GetEnvironmentVariable("BACONFIG_TARGET");
             if (environmentString == null) return builder;
