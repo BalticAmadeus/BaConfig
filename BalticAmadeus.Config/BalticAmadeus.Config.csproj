@@ -2,11 +2,11 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netcoreapp2.0</TargetFrameworks>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <Authors>Benas Budrys</Authors>
     <Company>Baltic Amadeus</Company>
     <Copyright>Copyright 2017</Copyright>
-    <PackageReleaseNotes>Added local file override, file path from environment string.</PackageReleaseNotes>
+    <PackageReleaseNotes>Added option to add connection string (AddConnectionString). Priority for added connection string.</PackageReleaseNotes>
     <Description>Small ASP.NET Standart configuration extension witch uses Microsoft Blob Storage to get configurations. Configuration done by Microsoft.Extensions.Configuration and Microsoft.Extensions.Configuration.Json.</Description>
     <PackageLicenseUrl>https://github.com/BalticAmadeus/BaConfig/blob/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/BalticAmadeus/BaConfig</PackageProjectUrl>
